@@ -21,4 +21,10 @@ void MainWindow::DrawOSDInterface(void)
 void MainWindow::SetSignalAndSLot(void)
 {
     connect(this->inputTxt1, SIGNAL(textEdited(QString)), this->displayTxt1, SLOT(setText(QString)));
+    connect(this->inputTxt1,SIGNAL(textEdited(QString)),this,SLOT(PrintText(QString)));
+}
+
+void MainWindow::PrintText(const QString &text)
+{
+    qDebug()<<text;
 }

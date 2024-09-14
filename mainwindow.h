@@ -13,6 +13,8 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void PrintText(const QString &text);
 private:
     QLineEdit *inputTxt1;
     QLabel *displayTxt1;
