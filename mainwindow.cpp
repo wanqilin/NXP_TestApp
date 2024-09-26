@@ -7,22 +7,28 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     this->setWindowTitle(tr("NxpTestApp"));
-    this->setGeometry(100,100,500,600);
+    this->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
     DrawOSDInterface();
     SetSignalAndSLot();
+    CameraInit();
 }
 
 MainWindow::~MainWindow() {}
 
+void MainWindow::CameraInit(void)
+{
+
+}
+
 void MainWindow::DrawOSDInterface(void)
 {
-    this->inputTxt1 = new QLineEdit("lineEdit",this);
-    this->inputTxt1->setGeometry(40,40,100,30);
-    this->displayTxt1 = new QLabel("label",this);
-    this->displayTxt1->setGeometry(40,100,100,30);
+    this->displayTitle = new QLabel("i.Mx8MP Test App",this);
+    this->displayTitle->setGeometry(560,0,200,50);
+    this->displayTitle->setFont(QFont("Arial",16,QFont::Bold));
+
     this->lcdnumber = new QLCDNumber(19,this);
     this->lcdnumber->setSegmentStyle(QLCDNumber::Flat);
-    this->lcdnumber->setGeometry(100,100,180,50);
+    this->lcdnumber->setGeometry(550,60,180,50);
 
     //SetTimer
     m_timer = new QTimer(this);
@@ -34,8 +40,7 @@ void MainWindow::DrawOSDInterface(void)
 
 void MainWindow::SetSignalAndSLot(void)
 {
-    connect(this->inputTxt1, SIGNAL(textEdited(QString)), this->displayTxt1, SLOT(setText(QString)));
-    connect(this->inputTxt1,SIGNAL(textEdited(QString)),this,SLOT(PrintText(QString)));
+    ;
 }
 
 void MainWindow::PrintText(const QString &text)
