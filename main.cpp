@@ -5,6 +5,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    qDebug()<<"Hello NxpTestApp!";
 
     //Creat font object,Set font and size
     QFont font("Arial",12);

@@ -6,6 +6,12 @@
 #include <QLineEdit>
 #include <QMainWindow>
 #include <QTimer>
+#include <QMainWindow>
+#include <QCamera>
+#include <QCameraViewfinder>
+#include <QCameraImageCapture>
+#include <QPushButton>
+#include <QCameraInfo>
 
 class MainWindow : public QMainWindow
 {
@@ -25,10 +31,18 @@ public slots:
 private slots:
     void PrintText(const QString &text);
 
+    void captureImage();
+    void displayImage(int id, const QImage &preview);
 private:
+    QPushButton *captureButton;
     QLCDNumber *lcdnumber;
     QLabel *displayTitle;
     QTimer *m_timer;
+    QCamera *camera;
+    QCameraViewfinder *viewfinder;
+    QCameraImageCapture *imageCapture;
+    QLabel *CameraImage;
+
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);
 };
