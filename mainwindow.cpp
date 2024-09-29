@@ -29,13 +29,18 @@ void MainWindow::CameraInit(void)
     //Creat Viewfinder
     viewfinder = new QCameraViewfinder(this);
     viewfinder->setGeometry(960,0,320,240);
+    QCameraViewfinderSettings viewfinderSettings;
+    viewfinderSettings.setResolution(640,480);
+    viewfinderSettings.setMaximumFrameRate(15.0);
+    viewfinderSettings.setMaximumFrameRate(30.0);
+    camera->setViewfinderSettings(viewfinderSettings);
 
     //camer connect Viewfinder
     camera->setViewfinder(viewfinder);
 
     //Creat CaptureImage object
     CameraImage = new QLabel("ImageDisplay",this);
-    CameraImage->setGeometry(960,240,320,240);
+    CameraImage->setGeometry(960,250,320,240);
     CameraImage->clear();
     QPalette palette;
     palette.setColor(QPalette::Window,QColor(50, 50, 50));
