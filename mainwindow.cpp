@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
     DrawOSDInterface();
     SetSignalAndSLot();
-    CameraInit();
+    CameraHandle();
     WifiListInit();
 }
 
@@ -25,15 +25,11 @@ void MainWindow::DrawOSDInterface(void)
 {
     this->displayTitle = new QLabel("i.Mx8MP Test App",this);
     this->displayTitle->setGeometry(560,0,200,50);
-    this->displayTitle->setFont(QFont("Arial",16,QFont::Bold));
+    this->displayTitle->setFont(QFont("Arial",14,QFont::Bold));
 
     this->lcdnumber = new QLCDNumber(19,this);
     this->lcdnumber->setSegmentStyle(QLCDNumber::Flat);
     this->lcdnumber->setGeometry(550,60,180,50);
-
-    //CaptureButton
-    captureButton= new QPushButton("CaptureImage", this);
-    captureButton->setGeometry(1000,500,180,50);
 
     //SetTimer
     m_timer = new QTimer(this);
@@ -62,16 +58,45 @@ void MainWindow::RecvTimer(void)
 
 }
 
-
-void MainWindow::captureImage() {
-    // CaptureImage
-    imageCapture->capture();
-}
-
-void MainWindow::displayImage(int id, const QImage &preview)
+void MainWindow::CameraHandle(void)
 {
-    Q_UNUSED(id);
-    CameraImage->setPixmap(QPixmap::fromImage(preview));
+    QGroupBox *CameraGroupBox = new QGroupBox("Camera",this);
+    CameraGroupBox->setGeometry(940,0,350,550);
+    QVBoxLayout *Cameralayout = new QVBoxLayout(this);
+
+    QPalette palette;
+    palette.setColor(QPalette::Window,QColor(50, 50, 50));
+
+    //Creat Viewfinder
+    viewfinder = new QCameraViewfinder(this);
+    viewfinder->setFixedSize(320,240);
+    viewfinder->setAutoFillBackground(true);
+    viewfinder->setPalette(palette);
+
+    //Creat CaptureImage object
+    QPalette CameraImageTextpalette;
+    CameraImageTextpalette.setColor(QPalette::WindowText,Qt::red);
+    CameraImage = new QLabel("ImageDisplay",this);
+    CameraImage->setPalette(CameraImageTextpalette);
+    CameraImage->setFixedSize(320,240);
+    CameraImage->setAutoFillBackground(true);
+    CameraImage->setPalette(palette);
+
+   // CameraImage->setScaledContents(true);
+    CameraImage->setAlignment(Qt::AlignCenter);
+
+
+    //CaptureButton
+    captureButton= new QPushButton("Capture", this);
+    //captureButton->setGeometry(1000,500,180,50);
+    captureButton->resize(180,50);
+
+    Cameralayout->addWidget(viewfinder);
+    Cameralayout->addWidget(CameraImage);
+    Cameralayout->addWidget(captureButton);
+
+    CameraGroupBox->setLayout(Cameralayout);
+    CameraInit();
 }
 
 void MainWindow::CameraInit(void)
@@ -84,9 +109,6 @@ void MainWindow::CameraInit(void)
         //Creat CameraObject
         camera = new QCamera(cameras.first(),this);
 
-        //Creat Viewfinder
-        viewfinder = new QCameraViewfinder(this);
-        viewfinder->setGeometry(960,0,320,240);
         QCameraViewfinderSettings viewfinderSettings;
         viewfinderSettings.setResolution(640,480);
         viewfinderSettings.setMaximumFrameRate(15.0);
@@ -96,14 +118,7 @@ void MainWindow::CameraInit(void)
         //camer connect Viewfinder
         camera->setViewfinder(viewfinder);
 
-        //Creat CaptureImage object
-        CameraImage = new QLabel("ImageDisplay",this);
-        CameraImage->setGeometry(960,250,320,240);
         CameraImage->clear();
-        QPalette palette;
-        palette.setColor(QPalette::Window,QColor(50, 50, 50));
-        CameraImage->setAutoFillBackground(true);
-        CameraImage->setPalette(palette);
         CameraImage->setScaledContents(true);
 
         //Creat ImageCapture Object
@@ -115,12 +130,19 @@ void MainWindow::CameraInit(void)
     else
     {
         qDebug()<<"No camera available.";
-        CameraImage = new QLabel("No camera available.",this);
-        CameraImage->setGeometry(960,0,320,240);
-        CameraImage->setAlignment(Qt::AlignCenter);
-        QPalette palette;
-        palette.setColor(QPalette::WindowText,Qt::white);
+        CameraImage->setText("No camera available.");
     }
+}
+
+void MainWindow::captureImage() {
+    // CaptureImage
+    imageCapture->capture();
+}
+
+void MainWindow::displayImage(int id, const QImage &preview)
+{
+    Q_UNUSED(id);
+    CameraImage->setPixmap(QPixmap::fromImage(preview));
 }
 
 void MainWindow::WifiListInit(void)
@@ -131,7 +153,7 @@ void MainWindow::WifiListInit(void)
     wifiRefresh->resize(140,20);
     QVBoxLayout *layout = new QVBoxLayout(this);
     QListWidget *listWidget = new QListWidget(this);
-    listWidget->setFixedSize(150, 200); // ÉèÖÃ¿í150£¬¸ß200
+    listWidget->setFixedSize(150, 200);
     listWidget->setMinimumSize(150, 200);
     listWidget->setMaximumSize(200, 220);
     listWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);

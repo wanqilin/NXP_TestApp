@@ -47,5 +47,6 @@ private:
     void SetSignalAndSLot(void);
     void WifiListInit();
     QStringList getWifiList();
+    void CameraHandle();
 };
 #endif // MAINWINDOW_H

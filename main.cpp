@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     qDebug()<<"Hello NxpTestApp!";
 
     //Creat font object,Set font and size
-    QFont font("Arial",12);
+    QFont font("Arial",10);
     //set app global font
     a.setFont(font);
 
