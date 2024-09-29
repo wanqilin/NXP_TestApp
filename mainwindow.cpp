@@ -3,6 +3,10 @@
 #include <QtDebug>
 #include <QDateTime>
 #include <QPalette>
+#include <QVBoxLayout>
+#include <QListWidget>
+#include <QProcess>
+#include <QGroupBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,58 +16,10 @@ MainWindow::MainWindow(QWidget *parent)
     DrawOSDInterface();
     SetSignalAndSLot();
     CameraInit();
+    WifiListInit();
 }
 
 MainWindow::~MainWindow() {}
-
-void MainWindow::CameraInit(void)
-{
-    const QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    if (!cameras.isEmpty())
-    {
-     qDebug()<<"Camera deviceName:";
-     qDebug()<<cameras.first().deviceName();
-    //Creat CameraObject
-    camera = new QCamera(cameras.first(),this);
-
-    //Creat Viewfinder
-    viewfinder = new QCameraViewfinder(this);
-    viewfinder->setGeometry(960,0,320,240);
-    QCameraViewfinderSettings viewfinderSettings;
-    viewfinderSettings.setResolution(640,480);
-    viewfinderSettings.setMaximumFrameRate(15.0);
-    viewfinderSettings.setMaximumFrameRate(30.0);
-    camera->setViewfinderSettings(viewfinderSettings);
-
-    //camer connect Viewfinder
-    camera->setViewfinder(viewfinder);
-
-    //Creat CaptureImage object
-    CameraImage = new QLabel("ImageDisplay",this);
-    CameraImage->setGeometry(960,250,320,240);
-    CameraImage->clear();
-    QPalette palette;
-    palette.setColor(QPalette::Window,QColor(50, 50, 50));
-    CameraImage->setAutoFillBackground(true);
-    CameraImage->setPalette(palette);
-    CameraImage->setScaledContents(true);
-
-    //Creat ImageCapture Object
-    imageCapture = new QCameraImageCapture(camera, this);
-    connect(captureButton,&QPushButton::clicked,this,&MainWindow::captureImage);
-    connect(imageCapture, &QCameraImageCapture::imageCaptured, this, &MainWindow::displayImage);
-    camera->start();
-    }
-    else
-    {
-        qDebug()<<"No camera available.";
-        CameraImage = new QLabel("No camera available.",this);
-        CameraImage->setGeometry(960,0,320,240);
-        CameraImage->setAlignment(Qt::AlignCenter);
-        QPalette palette;
-        palette.setColor(QPalette::WindowText,Qt::white);
-    }
-}
 
 void MainWindow::DrawOSDInterface(void)
 {
@@ -116,4 +72,98 @@ void MainWindow::displayImage(int id, const QImage &preview)
 {
     Q_UNUSED(id);
     CameraImage->setPixmap(QPixmap::fromImage(preview));
+}
+
+void MainWindow::CameraInit(void)
+{
+    const QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
+    if (!cameras.isEmpty())
+    {
+        qDebug()<<"Camera deviceName:";
+        qDebug()<<cameras.first().deviceName();
+        //Creat CameraObject
+        camera = new QCamera(cameras.first(),this);
+
+        //Creat Viewfinder
+        viewfinder = new QCameraViewfinder(this);
+        viewfinder->setGeometry(960,0,320,240);
+        QCameraViewfinderSettings viewfinderSettings;
+        viewfinderSettings.setResolution(640,480);
+        viewfinderSettings.setMaximumFrameRate(15.0);
+        viewfinderSettings.setMaximumFrameRate(30.0);
+        camera->setViewfinderSettings(viewfinderSettings);
+
+        //camer connect Viewfinder
+        camera->setViewfinder(viewfinder);
+
+        //Creat CaptureImage object
+        CameraImage = new QLabel("ImageDisplay",this);
+        CameraImage->setGeometry(960,250,320,240);
+        CameraImage->clear();
+        QPalette palette;
+        palette.setColor(QPalette::Window,QColor(50, 50, 50));
+        CameraImage->setAutoFillBackground(true);
+        CameraImage->setPalette(palette);
+        CameraImage->setScaledContents(true);
+
+        //Creat ImageCapture Object
+        imageCapture = new QCameraImageCapture(camera, this);
+        connect(captureButton,&QPushButton::clicked,this,&MainWindow::captureImage);
+        connect(imageCapture, &QCameraImageCapture::imageCaptured, this, &MainWindow::displayImage);
+        camera->start();
+    }
+    else
+    {
+        qDebug()<<"No camera available.";
+        CameraImage = new QLabel("No camera available.",this);
+        CameraImage->setGeometry(960,0,320,240);
+        CameraImage->setAlignment(Qt::AlignCenter);
+        QPalette palette;
+        palette.setColor(QPalette::WindowText,Qt::white);
+    }
+}
+
+void MainWindow::WifiListInit(void)
+{
+    QGroupBox *wifiGroupBox = new QGroupBox("Wifi List",this);
+    wifiGroupBox->setGeometry(10,20,220,280);
+    QPushButton *wifiRefresh = new QPushButton("Refresh",this);
+    wifiRefresh->resize(140,20);
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    QListWidget *listWidget = new QListWidget(this);
+    listWidget->setFixedSize(150, 200); // ÉèÖÃ¿í150£¬¸ß200
+    listWidget->setMinimumSize(150, 200);
+    listWidget->setMaximumSize(200, 220);
+    listWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    layout->addWidget(wifiRefresh);
+    layout->addWidget(listWidget);
+    wifiGroupBox->setLayout(layout);
+
+    // get wifi list
+    QStringList wifiList = getWifiList();
+    for (const QString &wifi : wifiList) {
+        listWidget->addItem(wifi);
+    }
+}
+
+QStringList  MainWindow::getWifiList(void)
+{
+    QStringList wifiList;
+    QProcess process;
+    process.start("netsh", QStringList() << "wlan" << "show" << "network");
+    process.waitForFinished();
+
+    QString output = process.readAllStandardOutput();
+    QStringList lines = output.split('\n');
+
+    for (const QString &line : lines) {
+        if (line.contains("SSID")) {
+            QStringList parts = line.split(':');
+            if (parts.size() > 1) {
+                wifiList.append(parts[1].trimmed());
+            }
+        }
+    }
+    return wifiList;
 }

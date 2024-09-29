@@ -45,5 +45,7 @@ private:
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);
+    void WifiListInit();
+    QStringList getWifiList();
 };
 #endif // MAINWINDOW_H
