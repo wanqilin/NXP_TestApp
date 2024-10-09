@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "OpenCVWindow.h"
 #include <QTimer>
 #include <QtDebug>
 #include <QDateTime>
@@ -10,6 +11,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
+    , pOpenCVWindow(nullptr)
 {
     this->setWindowTitle(tr("NxpTestApp"));
     this->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
@@ -23,7 +25,7 @@ MainWindow::~MainWindow() {}
 
 void MainWindow::DrawOSDInterface(void)
 {
-    this->displayTitle = new QLabel("i.Mx8MP Test App",this);
+    this->displayTitle = new QLabel("i.Mx8MP Test ",this);
     this->displayTitle->setGeometry(560,0,200,50);
     this->displayTitle->setFont(QFont("Arial",14,QFont::Bold));
 
@@ -61,7 +63,7 @@ void MainWindow::RecvTimer(void)
 void MainWindow::CameraHandle(void)
 {
     QGroupBox *CameraGroupBox = new QGroupBox("Camera",this);
-    CameraGroupBox->setGeometry(940,0,350,550);
+    CameraGroupBox->setGeometry(940,0,350,600);
     QVBoxLayout *Cameralayout = new QVBoxLayout(this);
 
     QPalette palette;
@@ -85,15 +87,19 @@ void MainWindow::CameraHandle(void)
    // CameraImage->setScaledContents(true);
     CameraImage->setAlignment(Qt::AlignCenter);
 
-
     //CaptureButton
     captureButton= new QPushButton("Capture", this);
-    //captureButton->setGeometry(1000,500,180,50);
     captureButton->resize(180,50);
+
+   //OpenCVButton
+    OpenCVButton = new QPushButton("GotoOpenCV",this);
+    OpenCVButton->resize(180,50);
+    connect(OpenCVButton,&QPushButton::clicked,this,&MainWindow::GotoOpenCVWindow);
 
     Cameralayout->addWidget(viewfinder);
     Cameralayout->addWidget(CameraImage);
     Cameralayout->addWidget(captureButton);
+    Cameralayout->addWidget(OpenCVButton);
 
     CameraGroupBox->setLayout(Cameralayout);
     CameraInit();
@@ -143,6 +149,20 @@ void MainWindow::displayImage(int id, const QImage &preview)
 {
     Q_UNUSED(id);
     CameraImage->setPixmap(QPixmap::fromImage(preview));
+}
+
+void MainWindow::GotoOpenCVWindow()
+{
+    if(!pOpenCVWindow)
+    {
+        qDebug()<<"CreateOpenCVWindow!";
+        pOpenCVWindow = new OpenCVWindow(this);
+        connect(pOpenCVWindow, &QWidget::destroyed, this, [this]() { pOpenCVWindow = nullptr; });
+    }
+    qDebug()<<"OpenCVWindowShow!";
+    pOpenCVWindow->show();
+    pOpenCVWindow->raise();    //front desk
+    pOpenCVWindow->activateWindow();
 }
 
 void MainWindow::WifiListInit(void)

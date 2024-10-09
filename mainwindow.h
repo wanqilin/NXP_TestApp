@@ -6,12 +6,14 @@
 #include <QLineEdit>
 #include <QMainWindow>
 #include <QTimer>
-#include <QMainWindow>
+
 #include <QCamera>
 #include <QCameraViewfinder>
 #include <QCameraImageCapture>
 #include <QPushButton>
 #include <QCameraInfo>
+
+class OpenCVWindow;
 
 class MainWindow : public QMainWindow
 {
@@ -33,8 +35,10 @@ private slots:
 
     void captureImage();
     void displayImage(int id, const QImage &preview);
+    void GotoOpenCVWindow();
 private:
     QPushButton *captureButton;
+    QPushButton *OpenCVButton;
     QLCDNumber *lcdnumber;
     QLabel *displayTitle;
     QTimer *m_timer;
@@ -42,6 +46,7 @@ private:
     QCameraViewfinder *viewfinder;
     QCameraImageCapture *imageCapture;
     QLabel *CameraImage;
+    OpenCVWindow *pOpenCVWindow;
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);
