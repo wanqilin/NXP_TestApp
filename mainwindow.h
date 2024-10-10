@@ -6,7 +6,6 @@
 #include <QLineEdit>
 #include <QMainWindow>
 #include <QTimer>
-
 #include <QCamera>
 #include <QCameraViewfinder>
 #include <QCameraImageCapture>

@@ -1,6 +1,12 @@
 #ifndef OPENCVWINDOW_H
 #define OPENCVWINDOW_H
 #include <QMainWindow>
+#include <QLabel>
+#include <opencv2/core/core.hpp>
+
+
+using namespace cv;
+using namespace std;
 
 class OpenCVWindow : public QMainWindow
 {
@@ -8,6 +14,10 @@ class OpenCVWindow : public QMainWindow
 public:
     explicit OpenCVWindow(QWidget *parent = nullptr);
     ~OpenCVWindow();
+
+private:
+    QLabel *OpencvImage;
+    QImage Mat2QImage(Mat cvImg);
 };
 
 #endif // OPENCVWINDOW_H

@@ -17,6 +17,15 @@ HEADERS += \
     OpenCVWindow.h \
     mainwindow.h
 
+#OPENCV_DIR = D:/work/OpenCV/opencv-4.5.1/QT-opencv-4.5.1/build/install
+
+INCLUDEPATH += D:/work/OpenCV/opencv-4.5.1/QT-opencv-4.5.1/build/install/include
+LIBS += -LD:/work/OpenCV/opencv-4.5.1/QT-opencv-4.5.1/build/install/x64/mingw/lib \
+         -lopencv_core451 \
+         -lopencv_imgproc451 \
+         -lopencv_highgui451 \
+         -lopencv_imgcodecs451
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
