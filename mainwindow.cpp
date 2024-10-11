@@ -8,6 +8,13 @@
 #include <QListWidget>
 #include <QProcess>
 #include <QGroupBox>
+#include <opencv2/opencv.hpp>
+#include <opencv2/videoio.hpp>
+#include <opencv2\imgproc\types_c.h>
+#include <QImage>
+
+using namespace std;
+using namespace cv;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -102,7 +109,7 @@ void MainWindow::CameraHandle(void)
     Cameralayout->addWidget(OpenCVButton);
 
     CameraGroupBox->setLayout(Cameralayout);
-    CameraInit();
+    OpenCVfaceRecognition(); //CameraInit();
 }
 
 void MainWindow::CameraInit(void)
@@ -149,6 +156,88 @@ void MainWindow::displayImage(int id, const QImage &preview)
 {
     Q_UNUSED(id);
     CameraImage->setPixmap(QPixmap::fromImage(preview));
+}
+
+int MainWindow::OpenCVfaceRecognition(void)
+{
+    Mat src;
+    Mat gray;
+    Mat dst;
+
+    CascadeClassifier c;
+
+    if(!c.load("D:/wql/openCV/4.5.1/QT-opencv-4.5.1/source/data/haarcascades/haarcascade_frontalface_alt2.xml"))
+    {
+        qDebug()<<"Load haarcascade_frontalface_alt2 fail!";
+        return -1;
+    }
+
+    vector<Rect> faces;
+
+    VideoCapture v(0);
+
+    while(v.read(src))
+    {
+        flip(src, src, 1);
+        cvtColor(src, gray, CV_BGR2GRAY);
+        equalizeHist(gray, dst);
+        c.detectMultiScale(dst, faces);
+
+        for(std::vector<cv::Rect>::size_type i=0; i<faces.size(); i++)
+        {
+            rectangle(src, faces[i], Scalar(0,0,255), 2);
+        }
+
+        //CameraImage->clear();
+        //CameraImage->setScaledContents(true);
+        //QImage qimg = Mat2QImage(src);
+        //CameraImage->setPixmap(QPixmap::fromImage(qimg));
+
+        //展示图像
+        imshow("Test1", src);
+        //imshow("Test2", gray);
+        //imshow("Test3", dst);
+
+
+        //加延时函数
+        //函数原型：int waitKey(int delay = 0);
+        //参数：等待时间
+        //返回值：在等待期间用户按下的键盘的ascii值    ESC键对应的值为27
+        if(waitKey(20)==27)
+        {
+            break;
+        }
+    }
+    return 0;
+}
+
+QImage MainWindow::Mat2QImage(Mat cvImg)
+{
+    QImage qImg;
+    if(cvImg.channels()==3)     //3 channels color image
+    {
+
+        cv::cvtColor(cvImg,cvImg,CV_BGR2RGB);
+        qImg =QImage((const unsigned char*)(cvImg.data),
+                      cvImg.cols, cvImg.rows,
+                      cvImg.cols*cvImg.channels(),
+                      QImage::Format_RGB888);
+    }
+    else if(cvImg.channels()==1)                    //grayscale image
+    {
+        qImg =QImage((const unsigned char*)(cvImg.data),
+                      cvImg.cols,cvImg.rows,
+                      cvImg.cols*cvImg.channels(),
+                      QImage::Format_Indexed8);
+    }
+    else
+    {
+        qImg =QImage((const unsigned char*)(cvImg.data),
+                      cvImg.cols,cvImg.rows,
+                      cvImg.cols*cvImg.channels(),
+                      QImage::Format_RGB888);
+    }
+    return qImg;
 }
 
 void MainWindow::GotoOpenCVWindow()

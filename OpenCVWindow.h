@@ -18,6 +18,7 @@ public:
 private:
     QLabel *OpencvImage;
     QImage Mat2QImage(Mat cvImg);
+    int faceRecognition(void);
 };
 
 #endif // OPENCVWINDOW_H

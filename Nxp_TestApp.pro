@@ -24,7 +24,10 @@ LIBS += -LD:/work/OpenCV/opencv-4.5.1/QT-opencv-4.5.1/build/install/x64/mingw/li
          -lopencv_core451 \
          -lopencv_imgproc451 \
          -lopencv_highgui451 \
-         -lopencv_imgcodecs451
+         -lopencv_imgcodecs451 \
+         -lopencv_videoio451 \
+         -lopencv_objdetect451 \
+         -lopencv_highgui451
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

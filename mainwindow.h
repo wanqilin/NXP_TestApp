@@ -11,6 +11,10 @@
 #include <QCameraImageCapture>
 #include <QPushButton>
 #include <QCameraInfo>
+#include <opencv2/core/core.hpp>
+
+using namespace cv;
+using namespace std;
 
 class OpenCVWindow;
 
@@ -52,5 +56,7 @@ private:
     void WifiListInit();
     QStringList getWifiList();
     void CameraHandle();
+    QImage Mat2QImage(Mat cvImg);
+    int OpenCVfaceRecognition();
 };
 #endif // MAINWINDOW_H
