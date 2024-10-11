@@ -17,6 +17,7 @@ using namespace cv;
 using namespace std;
 
 class OpenCVWindow;
+class OpenCVfaceRecognition;
 
 class MainWindow : public QMainWindow
 {
@@ -30,6 +31,10 @@ public:
     ~MainWindow();
 
     void CameraInit();
+
+signals:
+    void StartOpenCVfaceRecognition(void);
+
 public slots:
     void RecvTimer();
 
@@ -39,6 +44,7 @@ private slots:
     void captureImage();
     void displayImage(int id, const QImage &preview);
     void GotoOpenCVWindow();
+    void OpenCVfaceRecognitionHandle();
 private:
     QPushButton *captureButton;
     QPushButton *OpenCVButton;
@@ -50,13 +56,14 @@ private:
     QCameraImageCapture *imageCapture;
     QLabel *CameraImage;
     OpenCVWindow *pOpenCVWindow;
+    class OpenCVfaceRecognition *processor;
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);
     void WifiListInit();
     QStringList getWifiList();
     void CameraHandle();
-    QImage Mat2QImage(Mat cvImg);
+
     int OpenCVfaceRecognition();
 };
 #endif // MAINWINDOW_H

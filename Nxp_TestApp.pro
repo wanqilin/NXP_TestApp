@@ -11,13 +11,14 @@ CONFIG += c++17
 SOURCES += \
     OpenCVWindow.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    opencvfacerecognition.cpp
 
 HEADERS += \
     OpenCVWindow.h \
-    mainwindow.h
+    mainwindow.h \
+    opencvfacerecognition.h
 
-#OPENCV_DIR = D:/work/OpenCV/opencv-4.5.1/QT-opencv-4.5.1/build/install
 
 INCLUDEPATH += D:/work/OpenCV/opencv-4.5.1/QT-opencv-4.5.1/build/install/include
 LIBS += -LD:/work/OpenCV/opencv-4.5.1/QT-opencv-4.5.1/build/install/x64/mingw/lib \
