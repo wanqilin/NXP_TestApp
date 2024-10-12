@@ -54,7 +54,8 @@ private:
     QCamera *camera;
     QCameraViewfinder *viewfinder;
     QCameraImageCapture *imageCapture;
-    QLabel *CameraImage;
+    QLabel *CameraView;
+    QLabel *MatchImage;
     OpenCVWindow *pOpenCVWindow;
     class OpenCVfaceRecognition *processor;
 
@@ -63,7 +64,5 @@ private:
     void WifiListInit();
     QStringList getWifiList();
     void CameraHandle();
-
-    int OpenCVfaceRecognition();
 };
 #endif // MAINWINDOW_H

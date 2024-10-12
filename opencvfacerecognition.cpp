@@ -8,14 +8,9 @@
 using namespace std;
 using namespace cv;
 
+OpenCVfaceRecognition::OpenCVfaceRecognition(QObject *parent) : QThread(parent){}
 
-OpenCVfaceRecognition::OpenCVfaceRecognition()
-{
-
-}
-
-OpenCVfaceRecognition::~OpenCVfaceRecognition()
-{
+OpenCVfaceRecognition::~OpenCVfaceRecognition() {
     requestInterruption();
     wait();
 }
@@ -56,7 +51,8 @@ void OpenCVfaceRecognition::run()
         }
 
         QImage qimg = Mat2QImage(src);
-
+        emit frameProcessed(0x1,qimg);
+        QThread::msleep(30);
 
         //imshow("Test1", src);
         //imshow("Test2", gray);

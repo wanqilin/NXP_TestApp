@@ -11,7 +11,6 @@
 #include <QGroupBox>
 
 using namespace std;
-class OpenCVfaceRecognition;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -76,24 +75,22 @@ void MainWindow::CameraHandle(void)
 
     QPalette palette;
     palette.setColor(QPalette::Window,QColor(50, 50, 50));
+    palette.setColor(QPalette::WindowText, Qt::white);
+    //Camera View
+    CameraView = new QLabel("No Data!",this);
+    CameraView->setPalette(palette);
+    CameraView->setFixedSize(320,240);
+    CameraView->setAutoFillBackground(true);
+    CameraView->setPalette(palette);
+    CameraView->setAlignment(Qt::AlignCenter);
 
-    //Creat Viewfinder
-    viewfinder = new QCameraViewfinder(this);
-    viewfinder->setFixedSize(320,240);
-    viewfinder->setAutoFillBackground(true);
-    viewfinder->setPalette(palette);
-
-    //Creat CaptureImage object
-    QPalette CameraImageTextpalette;
-    CameraImageTextpalette.setColor(QPalette::WindowText,Qt::red);
-    CameraImage = new QLabel("ImageDisplay",this);
-    CameraImage->setPalette(CameraImageTextpalette);
-    CameraImage->setFixedSize(320,240);
-    CameraImage->setAutoFillBackground(true);
-    CameraImage->setPalette(palette);
-
-   // CameraImage->setScaledContents(true);
-    CameraImage->setAlignment(Qt::AlignCenter);
+    //MatchImage
+    MatchImage = new QLabel("No Data!",this);
+    MatchImage->setPalette(palette);
+    MatchImage->setFixedSize(320,240);
+    MatchImage->setAutoFillBackground(true);
+    MatchImage->setPalette(palette);
+    MatchImage->setAlignment(Qt::AlignCenter);
 
     //CaptureButton
     captureButton= new QPushButton("Capture", this);
@@ -104,8 +101,8 @@ void MainWindow::CameraHandle(void)
     //OpenCVButton->resize(180,50);
     //connect(OpenCVButton,&QPushButton::clicked,this,&MainWindow::GotoOpenCVWindow);
 
-    Cameralayout->addWidget(viewfinder);
-    Cameralayout->addWidget(CameraImage);
+    Cameralayout->addWidget(CameraView);
+    Cameralayout->addWidget(MatchImage);
     Cameralayout->addWidget(captureButton);
     //Cameralayout->addWidget(OpenCVButton);
 
@@ -126,6 +123,16 @@ void MainWindow::CameraInit(void)
         //Creat CameraObject
         camera = new QCamera(cameras.first(),this);
 
+        QPalette palette;
+        palette.setColor(QPalette::Window,QColor(50, 50, 50));
+        //Creat Viewfinder
+        viewfinder = new QCameraViewfinder(this);
+        viewfinder->setFixedSize(320,240);
+        viewfinder->setAutoFillBackground(true);
+        viewfinder->setPalette(palette);
+        //Cameralayout->addWidget(viewfinder);
+        //CameraGroupBox->setLayout(Cameralayout);
+        
         QCameraViewfinderSettings viewfinderSettings;
         viewfinderSettings.setResolution(640,480);
         viewfinderSettings.setMaximumFrameRate(15.0);
@@ -144,7 +151,7 @@ void MainWindow::CameraInit(void)
     else
     {
         qDebug()<<"No camera available.";
-        CameraImage->setText("No camera available.");
+        CameraView->setText("No camera available.");
     }
 }
 
@@ -156,15 +163,15 @@ void MainWindow::captureImage() {
 void MainWindow::displayImage(int id, const QImage &preview)
 {
     Q_UNUSED(id);
-    CameraImage->clear();
-    CameraImage->setScaledContents(true);
-    CameraImage->setPixmap(QPixmap::fromImage(preview));
+    CameraView->clear();
+    CameraView->setScaledContents(true);
+    CameraView->setPixmap(QPixmap::fromImage(preview));
 }
 
 void MainWindow::OpenCVfaceRecognitionHandle(void)
 {
     qDebug()<<"OpenCVfaceRecognitionHandle!";
-    processor = new class OpenCVfaceRecognition(this);
+    processor = new OpenCVfaceRecognition();
     connect(processor,&OpenCVfaceRecognition::frameProcessed,this,&MainWindow::displayImage);
     processor->start();
 }
