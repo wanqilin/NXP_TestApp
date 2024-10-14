@@ -1,12 +1,15 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "sw_app_config.h"
 #include <QLCDNumber>
 #include <QLabel>
 #include <QLineEdit>
+#include <QListWidget>
 #include <QMainWindow>
 #include <QTimer>
 #include <QCamera>
+#include <QMessageBox>
 #include <QCameraViewfinder>
 #include <QCameraImageCapture>
 #include <QPushButton>
@@ -35,9 +38,6 @@ public:
 signals:
     void StartOpenCVfaceRecognition(void);
 
-public slots:
-    void RecvTimer();
-
 private slots:
     void PrintText(const QString &text);
 
@@ -45,10 +45,12 @@ private slots:
     void displayImage(int id, const QImage &preview);
     void GotoOpenCVWindow();
     void OpenCVfaceRecognitionHandle();
+    void TimerHandle();
 private:
     QPushButton *captureButton;
     QPushButton *OpenCVButton;
     QLCDNumber *lcdnumber;
+    QListWidget *listWidget;
     QLabel *displayTitle;
     QTimer *m_timer;
     QCamera *camera;
@@ -61,8 +63,11 @@ private:
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);
-    void WifiListInit();
     QStringList getWifiList();
-    void CameraHandle();
+    void wifiListUpdate();
+    void ClockUpdate();
+    void DrawClockPage();
+    void DrawWifiPage();
+    void DrawCameraPage();
 };
 #endif // MAINWINDOW_H

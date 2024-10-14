@@ -6,7 +6,7 @@
 #include <QDateTime>
 #include <QPalette>
 #include <QVBoxLayout>
-#include <QListWidget>
+
 #include <QProcess>
 #include <QGroupBox>
 
@@ -18,10 +18,18 @@ MainWindow::MainWindow(QWidget *parent)
 {
     this->setWindowTitle(tr("NxpTestApp"));
     this->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
-    DrawOSDInterface();
+
+
+
+    //SetTimer
+    m_timer = new QTimer(this);
+    m_timer->setSingleShot(false);  //Non-single trigger
+    m_timer->setInterval( 1*1000 );
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(TimerHandle()));
+    m_timer->start();
+
     SetSignalAndSLot();
-    CameraHandle();
-    WifiListInit();
+    DrawOSDInterface();
 }
 
 MainWindow::~MainWindow()
@@ -32,20 +40,18 @@ MainWindow::~MainWindow()
 
 void MainWindow::DrawOSDInterface(void)
 {
-    this->displayTitle = new QLabel("i.Mx8MP Test ",this);
+    this->displayTitle = new QLabel("TestApp",this);
     this->displayTitle->setGeometry(560,0,200,50);
     this->displayTitle->setFont(QFont("Arial",14,QFont::Bold));
 
-    this->lcdnumber = new QLCDNumber(19,this);
-    this->lcdnumber->setSegmentStyle(QLCDNumber::Flat);
-    this->lcdnumber->setGeometry(550,60,180,50);
+    //Draw Clock
+    DrawClockPage();
 
-    //SetTimer
-    m_timer = new QTimer(this);
-    m_timer->setSingleShot(false);  //Non-single trigger
-    m_timer->setInterval( 1*1000 );
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(RecvTimer()));
-    m_timer->start();
+    //draw wifi
+    DrawWifiPage();
+
+    //draw camera
+    DrawCameraPage();
 }
 
 void MainWindow::SetSignalAndSLot(void)
@@ -58,16 +64,28 @@ void MainWindow::PrintText(const QString &text)
     qDebug()<<text;
 }
 
-void MainWindow::RecvTimer(void)
+void MainWindow::TimerHandle(void)
+{    
+    ClockUpdate();
+    wifiListUpdate();
+}
+
+void MainWindow::DrawClockPage(void)
+{
+    //draw lcdnumber
+    this->lcdnumber = new QLCDNumber(19,this);
+    this->lcdnumber->setSegmentStyle(QLCDNumber::Flat);
+    this->lcdnumber->setGeometry(550,60,180,50);
+}
+
+void MainWindow::ClockUpdate(void)
 {
     //Get Current Time
     QDateTime dt = QDateTime::currentDateTime();
     QString strTime = dt.toString("yyyy-MM-dd HH:mm:ss");
     this->lcdnumber->display(strTime);
-
 }
-
-void MainWindow::CameraHandle(void)
+void MainWindow::DrawCameraPage(void)
 {
     QGroupBox *CameraGroupBox = new QGroupBox("Camera",this);
     CameraGroupBox->setGeometry(940,0,350,600);
@@ -109,7 +127,7 @@ void MainWindow::CameraHandle(void)
     CameraGroupBox->setLayout(Cameralayout);
 
     //startOpenCVfaceRecognition
-    //OpenCVfaceRecognition(); //CameraInit();
+    //CameraInit();
     emit StartOpenCVfaceRecognition();
 }
 
@@ -191,27 +209,28 @@ void MainWindow::GotoOpenCVWindow()
     pOpenCVWindow->activateWindow();
 }
 
-void MainWindow::WifiListInit(void)
+void MainWindow::DrawWifiPage(void)
 {
     QGroupBox *wifiGroupBox = new QGroupBox("Wifi List",this);
     wifiGroupBox->setGeometry(10,20,220,280);
-    QPushButton *wifiRefresh = new QPushButton("Refresh",this);
-    wifiRefresh->resize(140,20);
     QVBoxLayout *layout = new QVBoxLayout(this);
-    QListWidget *listWidget = new QListWidget(this);
+    listWidget = new QListWidget(this);
     listWidget->setFixedSize(150, 200);
     listWidget->setMinimumSize(150, 200);
     listWidget->setMaximumSize(200, 220);
     listWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    layout->addWidget(wifiRefresh);
     layout->addWidget(listWidget);
     wifiGroupBox->setLayout(layout);
+}
 
+void MainWindow::wifiListUpdate(void)
+{
+    this->listWidget->clear();
     // get wifi list
     QStringList wifiList = getWifiList();
     for (const QString &wifi : wifiList) {
-        listWidget->addItem(wifi);
+        this->listWidget->addItem(wifi);
     }
 }
 
@@ -219,7 +238,10 @@ QStringList  MainWindow::getWifiList(void)
 {
     QStringList wifiList;
     QProcess process;
+#if(_WORK_OS_ENV_ == _WORK_OS_WINDOWS_)
     process.start("netsh", QStringList() << "wlan" << "show" << "network");
+#else
+#endif
     process.waitForFinished();
 
     QString output = process.readAllStandardOutput();

@@ -17,7 +17,8 @@ SOURCES += \
 HEADERS += \
     OpenCVWindow.h \
     mainwindow.h \
-    opencvfacerecognition.h
+    opencvfacerecognition.h \
+    sw_app_config.h
 
 
 INCLUDEPATH += D:/work/OpenCV/opencv-4.5.1/QT-opencv-4.5.1/build/install/include
@@ -27,8 +28,7 @@ LIBS += -LD:/work/OpenCV/opencv-4.5.1/QT-opencv-4.5.1/build/install/x64/mingw/li
          -lopencv_highgui451 \
          -lopencv_imgcodecs451 \
          -lopencv_videoio451 \
-         -lopencv_objdetect451 \
-         -lopencv_highgui451
+         -lopencv_objdetect451
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

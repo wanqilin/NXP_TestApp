@@ -2,11 +2,11 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2\imgproc\types_c.h>
+
 #include <QImage>
 #include <QtDebug>
+#include <vector>
 
-using namespace std;
-using namespace cv;
 
 OpenCVfaceRecognition::OpenCVfaceRecognition(QObject *parent) : QThread(parent){}
 
@@ -21,6 +21,8 @@ void OpenCVfaceRecognition::run()
     Mat gray;
     Mat dst;
 
+    qDebug()<<"OpenCVfaceRecognition Thread run!";
+
     CascadeClassifier c;
 
     VideoCapture v(0);
@@ -34,8 +36,20 @@ void OpenCVfaceRecognition::run()
         qDebug()<<"Load haarcascade_frontalface_alt2 fail!";
         return;
     }
+/*
+    QFile file(MY_FACE_STORE);
 
-    vector<Rect> faces;
+    if(file.exists())
+    {
+        recognizer = FaceRecognizer::load<LBPHFaceRecognizer>(MY_FACE_STORE);
+    }
+    else
+    {
+        recognizer = LBPHFaceRecognizer::create();
+    }
+*/
+
+    vector<Rect> facesPos;
 
 
     while(v.read(src))
@@ -43,11 +57,11 @@ void OpenCVfaceRecognition::run()
         flip(src, src, 1);
         cvtColor(src, gray, CV_BGR2GRAY);
         equalizeHist(gray, dst);
-        c.detectMultiScale(dst, faces);
+        c.detectMultiScale(dst, facesPos);
 
-        for(std::vector<cv::Rect>::size_type i=0; i<faces.size(); i++)
+        for(std::vector<cv::Rect>::size_type i=0; i<facesPos.size(); i++)
         {
-            rectangle(src, faces[i], Scalar(0,0,255), 2);
+            rectangle(src, facesPos[i], Scalar(0,0,255), 2);
         }
 
         QImage qimg = Mat2QImage(src);
