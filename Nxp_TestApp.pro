@@ -12,12 +12,14 @@ SOURCES += \
     OpenCVWindow.cpp \
     main.cpp \
     mainwindow.cpp \
-    opencvfacerecognition.cpp
+    opencvfacerecognition.cpp \
+    osdupdatethread.cpp
 
 HEADERS += \
     OpenCVWindow.h \
     mainwindow.h \
     opencvfacerecognition.h \
+    osdupdatethread.h \
     sw_app_config.h
 
 

@@ -5,11 +5,10 @@
 #include <QThread>
 #include <QFile>
 #include <opencv2/core/core.hpp>
-//#include <opencv2/face.hpp>
 
 using namespace std;
 using namespace cv;
-//using namespace cv::face;
+
 
 class OpenCVfaceRecognition : public QThread
 {

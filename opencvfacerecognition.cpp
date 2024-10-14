@@ -36,18 +36,6 @@ void OpenCVfaceRecognition::run()
         qDebug()<<"Load haarcascade_frontalface_alt2 fail!";
         return;
     }
-/*
-    QFile file(MY_FACE_STORE);
-
-    if(file.exists())
-    {
-        recognizer = FaceRecognizer::load<LBPHFaceRecognizer>(MY_FACE_STORE);
-    }
-    else
-    {
-        recognizer = LBPHFaceRecognizer::create();
-    }
-*/
 
     vector<Rect> facesPos;
 

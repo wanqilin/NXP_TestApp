@@ -1,13 +1,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "sw_app_config.h"
 #include <QLCDNumber>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMainWindow>
 #include <QTimer>
+#include <QThread>
 #include <QCamera>
 #include <QMessageBox>
 #include <QCameraViewfinder>
@@ -15,12 +15,15 @@
 #include <QPushButton>
 #include <QCameraInfo>
 #include <opencv2/core/core.hpp>
+#include "sw_app_config.h"
+#include "osdupdatethread.h"
 
 using namespace cv;
 using namespace std;
 
 class OpenCVWindow;
 class OpenCVfaceRecognition;
+class OSDUpdateThread;
 
 class MainWindow : public QMainWindow
 {
@@ -37,15 +40,17 @@ public:
 
 signals:
     void StartOpenCVfaceRecognition(void);
+    void StartOSDThread(void);
 
 private slots:
     void PrintText(const QString &text);
-
     void captureImage();
     void displayImage(int id, const QImage &preview);
     void GotoOpenCVWindow();
     void OpenCVfaceRecognitionHandle();
     void TimerHandle();
+
+    void OSDUpdate();
 private:
     QPushButton *captureButton;
     QPushButton *OpenCVButton;
@@ -59,7 +64,9 @@ private:
     QLabel *CameraView;
     QLabel *MatchImage;
     OpenCVWindow *pOpenCVWindow;
-    class OpenCVfaceRecognition *processor;
+    OpenCVfaceRecognition *processor;
+    OSDUpdateThread* osdupdatethread;
+    QThread* qthread;
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);

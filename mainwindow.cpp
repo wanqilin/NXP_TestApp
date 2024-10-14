@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "OpenCVWindow.h"
+#include "osdupdatethread.h"
 #include "opencvfacerecognition.h"
 #include <QTimer>
 #include <QtDebug>
@@ -19,14 +20,19 @@ MainWindow::MainWindow(QWidget *parent)
     this->setWindowTitle(tr("NxpTestApp"));
     this->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
 
-
-
     //SetTimer
+
     m_timer = new QTimer(this);
     m_timer->setSingleShot(false);  //Non-single trigger
     m_timer->setInterval( 1*1000 );
     connect(m_timer, SIGNAL(timeout()), this, SLOT(TimerHandle()));
     m_timer->start();
+
+
+    osdupdatethread = new OSDUpdateThread();
+    qthread = new QThread(this);
+    osdupdatethread->moveToThread(qthread);
+    qthread->start();
 
     SetSignalAndSLot();
     DrawOSDInterface();
@@ -52,11 +58,16 @@ void MainWindow::DrawOSDInterface(void)
 
     //draw camera
     DrawCameraPage();
+
+    emit StartOSDThread();
 }
 
 void MainWindow::SetSignalAndSLot(void)
 {
-   connect(this,&MainWindow::StartOpenCVfaceRecognition,this,&MainWindow::OpenCVfaceRecognitionHandle);
+    connect(this,&MainWindow::StartOpenCVfaceRecognition,this,&MainWindow::OpenCVfaceRecognitionHandle);
+    connect(qthread, &QThread::finished, qthread, &QThread::deleteLater);
+    connect(this, &MainWindow::StartOSDThread, osdupdatethread, &OSDUpdateThread::working);
+    connect(osdupdatethread, &OSDUpdateThread::ReDrawOSD,this,&MainWindow::OSDUpdate);
 }
 
 void MainWindow::PrintText(const QString &text)
@@ -67,6 +78,11 @@ void MainWindow::PrintText(const QString &text)
 void MainWindow::TimerHandle(void)
 {    
     ClockUpdate();
+}
+
+void MainWindow::OSDUpdate(void)
+{
+
     wifiListUpdate();
 }
 
