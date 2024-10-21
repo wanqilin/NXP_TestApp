@@ -14,6 +14,8 @@
 #include <QCameraImageCapture>
 #include <QPushButton>
 #include <QCameraInfo>
+#include <QGroupBox>
+#include <QNetworkConfigurationManager>
 #include <opencv2/core/core.hpp>
 #include "sw_app_config.h"
 #include "osdupdatethread.h"
@@ -49,9 +51,14 @@ private slots:
     void GotoOpenCVWindow();
     void OpenCVfaceRecognitionHandle();
     void TimerHandle();
-
     void OSDUpdate();
+    void DrawlanStatusUpdate(bool isOnline);
 private:
+    bool blanstatus;
+    bool busb1status;
+    bool busb2status;
+    bool busb3status;
+    bool btypecstatus;
     QPushButton *captureButton;
     QPushButton *OpenCVButton;
     QLCDNumber *lcdnumber;
@@ -63,10 +70,21 @@ private:
     QCameraImageCapture *imageCapture;
     QLabel *CameraView;
     QLabel *MatchImage;
+    QLabel *lanstatus;
+    QLabel *usb1status;
+    QLabel *usb2status;
+    QLabel *usb3status;
+    QLabel *typecstatus;
+    QGroupBox *lanbox;
+    QGroupBox *usb1box;
+    QGroupBox *usb2box;
+    QGroupBox *usb3box;
+    QGroupBox *typecbox;
     OpenCVWindow *pOpenCVWindow;
     OpenCVfaceRecognition *processor;
     OSDUpdateThread* osdupdatethread;
     QThread* qthread;
+    QNetworkConfigurationManager *networkManager;
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);
@@ -76,5 +94,7 @@ private:
     void DrawClockPage();
     void DrawWifiPage();
     void DrawCameraPage();
+    void DrawListenEventPage();
+    void InitVariable();
 };
 #endif // MAINWINDOW_H

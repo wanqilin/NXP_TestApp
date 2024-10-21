@@ -19,9 +19,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     this->setWindowTitle(tr("NxpTestApp"));
     this->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
+    InitVariable();
 
     //SetTimer
-
     m_timer = new QTimer(this);
     m_timer->setSingleShot(false);  //Non-single trigger
     m_timer->setInterval( 1*1000 );
@@ -44,6 +44,15 @@ MainWindow::~MainWindow()
     processor->wait();
 }
 
+void MainWindow::InitVariable(void)
+{
+    blanstatus = false;
+    busb1status = false;
+    busb2status = false;
+    busb3status = false;
+    btypecstatus = false;
+}
+
 void MainWindow::DrawOSDInterface(void)
 {
     this->displayTitle = new QLabel("TestApp",this);
@@ -55,6 +64,9 @@ void MainWindow::DrawOSDInterface(void)
 
     //draw wifi
     DrawWifiPage();
+
+    //Draw Listen event
+    DrawListenEventPage();
 
     //draw camera
     DrawCameraPage();
@@ -68,6 +80,10 @@ void MainWindow::SetSignalAndSLot(void)
     connect(qthread, &QThread::finished, qthread, &QThread::deleteLater);
     connect(this, &MainWindow::StartOSDThread, osdupdatethread, &OSDUpdateThread::working);
     connect(osdupdatethread, &OSDUpdateThread::ReDrawOSD,this,&MainWindow::OSDUpdate);
+
+    //listen network connect status
+    networkManager = new QNetworkConfigurationManager(this);
+    connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
 }
 
 void MainWindow::PrintText(const QString &text)
@@ -82,7 +98,6 @@ void MainWindow::TimerHandle(void)
 
 void MainWindow::OSDUpdate(void)
 {
-
     wifiListUpdate();
 }
 
@@ -243,9 +258,11 @@ void MainWindow::DrawWifiPage(void)
 void MainWindow::wifiListUpdate(void)
 {
     this->listWidget->clear();
+    //qDebug()<<"wifi list update!";
     // get wifi list
     QStringList wifiList = getWifiList();
     for (const QString &wifi : wifiList) {
+        //qDebug()<<wifi;
         this->listWidget->addItem(wifi);
     }
 }
@@ -272,4 +289,94 @@ QStringList  MainWindow::getWifiList(void)
         }
     }
     return wifiList;
+}
+
+void MainWindow::DrawListenEventPage(void)
+{
+    QGroupBox *ListenEventBox = new QGroupBox("Event",this);
+    ListenEventBox->setGeometry(10,320,120,240);
+    QVBoxLayout *Eventlayout = new QVBoxLayout(this);
+
+    //Lan
+    lanbox = new QGroupBox(this);
+    QLabel *lantxt = new QLabel("LAN",this);
+    lanstatus = new QLabel(this);
+    lanstatus->setFixedSize(20, 20);
+    lanstatus->setStyleSheet("background-color: gray; border-radius: 10px;");
+    QHBoxLayout *lanlayout = new QHBoxLayout(this);
+    lanlayout->addWidget(lantxt);
+    lanlayout->addWidget(lanstatus);
+    //lanlayout->addStretch();
+    lanbox->setLayout(lanlayout);
+
+    //USB-1
+    usb1box = new QGroupBox(this);
+    QLabel *usb1txt = new QLabel("USB-1",this);
+    QLabel *usb1status = new QLabel(this);
+    usb1status->setFixedSize(20, 20);
+    usb1status->setStyleSheet("background-color: gray; border-radius: 10px;");
+    QHBoxLayout *usb1layout = new QHBoxLayout(this);
+    usb1layout->addWidget(usb1txt);
+    usb1layout->addWidget(usb1status);
+    //usb1layout->addStretch();
+    usb1box->setLayout(usb1layout);
+
+    //USB-2
+    usb2box = new QGroupBox(this);
+    QLabel *usb2txt = new QLabel("USB-2",this);
+    QLabel *usb2status = new QLabel(this);
+    usb2status->setFixedSize(20, 20);
+    usb2status->setStyleSheet("background-color: gray; border-radius: 10px;");
+    QHBoxLayout *usb2layout = new QHBoxLayout(this);
+    usb2layout->addWidget(usb2txt);
+    usb2layout->addWidget(usb2status);
+    //usb2layout->addStretch();
+    usb2box->setLayout(usb2layout);
+
+    //USB-3
+    usb3box = new QGroupBox(this);
+    QLabel *usb3txt = new QLabel("USB-3",this);
+    QLabel *usb3status = new QLabel(this);
+    usb3status->setFixedSize(20, 20);
+    usb3status->setStyleSheet("background-color: gray; border-radius: 10px;");
+    QHBoxLayout *usb3layout = new QHBoxLayout(this);
+    usb3layout->addWidget(usb3txt);
+    usb3layout->addWidget(usb3status);
+    //usb3layout->addStretch();
+    usb3box->setLayout(usb3layout);
+
+    //Type-C
+    typecbox = new QGroupBox(this);
+    QLabel *typectxt = new QLabel("Type-C",this);
+    QLabel *typecstatus = new QLabel(this);
+    typecstatus->setFixedSize(20, 20);
+    typecstatus->setStyleSheet("background-color: gray; border-radius: 10px;");
+    QHBoxLayout *typeclayout = new QHBoxLayout(this);
+    typeclayout->addWidget(typectxt);
+    typeclayout->addWidget(typecstatus);
+    //typeclayout->addStretch();
+    typecbox->setLayout(typeclayout);
+
+    Eventlayout->addWidget(lanbox);
+    Eventlayout->addWidget(usb1box);
+    Eventlayout->addWidget(usb2box);
+    Eventlayout->addWidget(usb3box);
+    Eventlayout->addWidget(typecbox);
+    Eventlayout->addStretch();
+    ListenEventBox->setLayout(Eventlayout);
+
+    blanstatus = networkManager->isOnline();
+    DrawlanStatusUpdate(blanstatus);
+
+}
+
+void MainWindow::DrawlanStatusUpdate(bool isOnline)
+{
+    if (isOnline) {
+        qDebug() << "Network connected!";
+        lanstatus->setStyleSheet("background-color: green; border-radius: 10px;");
+    } else {
+        qDebug() << "Network disconnected!";
+        lanstatus->setStyleSheet("background-color: gray; border-radius: 10px;");
+    }
 }
