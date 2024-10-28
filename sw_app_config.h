@@ -2,11 +2,11 @@
 #define SW_APP_CONFIG_H
 
 
-#define    _WORK_OS_WINDOWS_    0
-#define    _WORK_OS_LINUX       1
+#define    _Q_OS_WINDOWS_    0
+#define    _Q_OS_LINUX       1
 
 
-#define _WORK_OS_ENV_     _WORK_OS_WINDOWS_
+#define _Q_OS_TYPE_     _Q_OS_WINDOWS_
 
 
 #endif // SW_APP_CONFIG_H

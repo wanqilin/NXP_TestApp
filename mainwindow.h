@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "sw_app_config.h"
 #include <QLCDNumber>
 #include <QLabel>
 #include <QLineEdit>
@@ -17,7 +18,15 @@
 #include <QGroupBox>
 #include <QNetworkConfigurationManager>
 #include <opencv2/core/core.hpp>
-#include "sw_app_config.h"
+#if (_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
+#include <windows.h>
+#include <dbt.h>
+#include <QDir>
+#include <QFileInfo>
+#include <SetupAPI.h>
+#include <initguid.h>
+#include <devguid.h>
+#endif
 #include "osdupdatethread.h"
 
 using namespace cv;
@@ -43,6 +52,11 @@ public:
 signals:
     void StartOpenCVfaceRecognition(void);
     void StartOSDThread(void);
+
+protected:
+#if(_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
+    bool nativeEvent(const QByteArray &eventType, void *message, long *result) override;
+#endif
 
 private slots:
     void PrintText(const QString &text);
@@ -96,5 +110,6 @@ private:
     void DrawCameraPage();
     void DrawListenEventPage();
     void InitVariable();
+    int getUSBDeviceCount();
 };
 #endif // MAINWINDOW_H

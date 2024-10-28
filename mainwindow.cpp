@@ -13,6 +13,10 @@
 
 using namespace std;
 
+// define GUID
+DEFINE_GUID(GUID_DEVINTERFACE_USB_DEVICE,
+            0xA5DCBF10L, 0x6530, 0x11D2, 0x90, 0x1F, 0x00, 0xC0, 0x4F, 0xB9, 0x51, 0xED);
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , pOpenCVWindow(nullptr)
@@ -271,7 +275,7 @@ QStringList  MainWindow::getWifiList(void)
 {
     QStringList wifiList;
     QProcess process;
-#if(_WORK_OS_ENV_ == _WORK_OS_WINDOWS_)
+#if(_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
     process.start("netsh", QStringList() << "wlan" << "show" << "network");
 #else
 #endif
@@ -380,3 +384,49 @@ void MainWindow::DrawlanStatusUpdate(bool isOnline)
         lanstatus->setStyleSheet("background-color: gray; border-radius: 10px;");
     }
 }
+
+#if(_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
+bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result){
+    if (eventType == "windows_generic_MSG") {
+        MSG *msg = static_cast<MSG *>(message);
+        if (msg->message == WM_DEVICECHANGE) {
+            if (msg->wParam == DBT_DEVICEARRIVAL) {
+                qDebug() << "USB plug-in cnt="<<getUSBDeviceCount();
+
+            } else if (msg->wParam == DBT_DEVICEREMOVECOMPLETE) {
+                qDebug() << "USB plug-out cnt="<<getUSBDeviceCount();
+
+            }
+        }
+    }
+    return QWidget::nativeEvent(eventType, message, result);
+}
+
+int MainWindow::getUSBDeviceCount() {
+    // Get usb device info 
+    HDEVINFO deviceInfoSet = SetupDiGetClassDevs(
+        &GUID_DEVINTERFACE_USB_DEVICE,
+        nullptr,
+        nullptr,
+        DIGCF_PRESENT | DIGCF_DEVICEINTERFACE
+        );
+
+    if (deviceInfoSet == INVALID_HANDLE_VALUE) {
+        qWarning() << "获取设备信息集失败";
+        return -1;
+    }
+
+    // loop device info
+    int deviceCount = 0;
+    SP_DEVINFO_DATA deviceInfoData;
+    deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+
+    for (int i = 0; SetupDiEnumDeviceInfo(deviceInfoSet, i, &deviceInfoData); i++) {
+        deviceCount++;
+    }
+
+    // clean device info
+    SetupDiDestroyDeviceInfoList(deviceInfoSet);
+    return deviceCount;
+}
+#endif
