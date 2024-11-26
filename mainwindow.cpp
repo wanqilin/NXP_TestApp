@@ -13,6 +13,7 @@
 
 using namespace std;
 
+#if (_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
 // define GUID
 DEFINE_GUID(GUID_DEVINTERFACE_USB_DEVICE,
             0xA5DCBF10L, 0x6530, 0x11D2, 0x90, 0x1F, 0x00, 0xC0, 0x4F, 0xB9, 0x51, 0xED);
@@ -20,6 +21,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_USB_DEVICE,
 // define GUID_DEVINTERFACE_DISK check usb disk
 DEFINE_GUID(GUID_DEVINTERFACE_DISK,
             0x53f56307,0xb6bf,0x11d0,0x94,0xf2,0x00,0xa0,0xc9,0x1e,0xfb,0x8b);
+#endif
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -112,6 +114,7 @@ void MainWindow::TimerHandle(void)
 void MainWindow::OSDUpdate(void)
 {
     wifiListUpdate();
+    USBDeviceUpdate();
 }
 
 void MainWindow::DrawClockPage(void)
@@ -351,14 +354,12 @@ void MainWindow::DrawListenEventPage(void)
     //applayout->addWidget(ListenEventBox);
     //appbox->setLayout(applayout);
 
-    #if(_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
     qDebug()<<"Usb Init Cnt:"<<getUSBDeviceCount();
     if(getUSBDeviceCount()>0)
         usbstatus->setStyleSheet("color: white; background-color: green; border-radius: 10px;");
     else
         usbstatus->setStyleSheet("color: black; background-color: gray; border-radius: 10px;");
     usbstatus->setNum(getUSBDeviceCount());
-    #endif
 
     blanstatus = networkManager->isOnline();
     DrawlanStatusUpdate(blanstatus);
@@ -428,5 +429,56 @@ int MainWindow::getUSBDeviceCount() {
     // clean device info
     SetupDiDestroyDeviceInfoList(deviceInfoSet);
     return deviceCount;
+}
+#else
+bool MainWindow::isUsbStorage(const std::string& devicePath) {
+    std::string usbPath = "/sys/class/block/" + devicePath + "/device";
+    DIR* dir = opendir(usbPath.c_str());
+    if (dir) {
+        // If the device directory exists, it is a USB device
+        closedir(dir);
+        return true;
+    }
+    return false;
+}
+
+int MainWindow::getUSBDeviceCount() {
+    int usbCount = 0;
+
+    DIR* dir = opendir("/sys/class/block");
+    if (!dir) {
+        qDebug() << "Failed to open /sys/class/block";
+        return -1;
+    }
+
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        // exclude "." and ".."
+        if (entry->d_name[0] == '.')
+            continue;
+
+        std::string deviceName(entry->d_name);
+
+        if (isUsbStorage(deviceName)) {
+            usbCount++;
+            qDebug() << "Found USB storage: " << deviceName.c_str();
+        }
+    }
+
+    closedir(dir);
+    return usbCount;
+}
+
+void MainWindow::USBDeviceUpdate(void)
+{
+    int usbCnt=0;
+
+    usbCnt=getUSBDeviceCount();
+    qDebug()<<"Usb Cnt:"<<usbCnt;
+    if(usbCnt>0)
+        usbstatus->setStyleSheet("color: white; background-color: green; border-radius: 10px;");
+    else
+        usbstatus->setStyleSheet("color: black; background-color: gray; border-radius: 10px;");
+    usbstatus->setNum(usbCnt);
 }
 #endif

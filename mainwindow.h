@@ -19,11 +19,14 @@
 #include <QBoxLayout>
 #include <QNetworkConfigurationManager>
 #include <opencv2/core/core.hpp>
+#if (_Q_OS_TYPE_ == _Q_OS_LINUX_)
+#include <dirent.h>
+#endif
 #if (_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
 #include <windows.h>
-#include <dbt.h>
 #include <QDir>
 #include <QFileInfo>
+#include <dbt.h>
 #include <SetupAPI.h>
 #include <initguid.h>
 #include <devguid.h>
@@ -107,5 +110,7 @@ private:
     void DrawListenEventPage();
     void InitVariable();
     int getUSBDeviceCount();
+    bool isUsbStorage(const std::string &devicePath);
+    void USBDeviceUpdate();
 };
 #endif // MAINWINDOW_H

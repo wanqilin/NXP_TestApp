@@ -12,6 +12,6 @@ void OSDUpdateThread::working(void)
     while(1)
     {
         emit ReDrawOSD();
-        QThread::sleep(5);
+        QThread::sleep(3);
     }
 }
