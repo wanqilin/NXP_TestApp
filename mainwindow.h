@@ -16,6 +16,7 @@
 #include <QPushButton>
 #include <QCameraInfo>
 #include <QGroupBox>
+#include <QBoxLayout>
 #include <QNetworkConfigurationManager>
 #include <opencv2/core/core.hpp>
 #if (_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
@@ -69,10 +70,6 @@ private slots:
     void DrawlanStatusUpdate(bool isOnline);
 private:
     bool blanstatus;
-    bool busb1status;
-    bool busb2status;
-    bool busb3status;
-    bool btypecstatus;
     QPushButton *captureButton;
     QPushButton *OpenCVButton;
     QLCDNumber *lcdnumber;
@@ -85,15 +82,14 @@ private:
     QLabel *CameraView;
     QLabel *MatchImage;
     QLabel *lanstatus;
-    QLabel *usb1status;
-    QLabel *usb2status;
-    QLabel *usb3status;
-    QLabel *typecstatus;
+    QLabel *usbtxt;
+    QLabel *usbstatus;
+
+    QGroupBox *appbox;
     QGroupBox *lanbox;
-    QGroupBox *usb1box;
-    QGroupBox *usb2box;
-    QGroupBox *usb3box;
-    QGroupBox *typecbox;
+    QGroupBox *usbbox;
+    QBoxLayout *applayout;
+    QHBoxLayout *usblayout;
     OpenCVWindow *pOpenCVWindow;
     OpenCVfaceRecognition *processor;
     OSDUpdateThread* osdupdatethread;

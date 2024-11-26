@@ -17,6 +17,10 @@ using namespace std;
 DEFINE_GUID(GUID_DEVINTERFACE_USB_DEVICE,
             0xA5DCBF10L, 0x6530, 0x11D2, 0x90, 0x1F, 0x00, 0xC0, 0x4F, 0xB9, 0x51, 0xED);
 
+// define GUID_DEVINTERFACE_DISK check usb disk
+DEFINE_GUID(GUID_DEVINTERFACE_DISK,
+            0x53f56307,0xb6bf,0x11d0,0x94,0xf2,0x00,0xa0,0xc9,0x1e,0xfb,0x8b);
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , pOpenCVWindow(nullptr)
@@ -46,22 +50,27 @@ MainWindow::~MainWindow()
 {
     processor->requestInterruption();
     processor->wait();
+    qthread->requestInterruption();
+    qthread->wait();
 }
 
 void MainWindow::InitVariable(void)
 {
     blanstatus = false;
-    busb1status = false;
-    busb2status = false;
-    busb3status = false;
-    btypecstatus = false;
 }
 
 void MainWindow::DrawOSDInterface(void)
 {
+    appbox = new QGroupBox(this);
+    appbox->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
+    applayout = new QBoxLayout(QBoxLayout::TopToBottom,this);
+
+
     this->displayTitle = new QLabel("TestApp",this);
     this->displayTitle->setGeometry(560,0,200,50);
     this->displayTitle->setFont(QFont("Arial",14,QFont::Bold));
+    //applayout->addWidget(displayTitle);
+    //appbox->setLayout(applayout);
 
     //Draw Clock
     DrawClockPage();
@@ -111,6 +120,8 @@ void MainWindow::DrawClockPage(void)
     this->lcdnumber = new QLCDNumber(19,this);
     this->lcdnumber->setSegmentStyle(QLCDNumber::Flat);
     this->lcdnumber->setGeometry(550,60,180,50);
+    //applayout->addWidget(lcdnumber);
+    //appbox->setLayout(applayout);
 }
 
 void MainWindow::ClockUpdate(void)
@@ -160,6 +171,9 @@ void MainWindow::DrawCameraPage(void)
     //Cameralayout->addWidget(OpenCVButton);
 
     CameraGroupBox->setLayout(Cameralayout);
+
+    //applayout->addWidget(CameraGroupBox);
+    //appbox->setLayout(applayout);
 
     //startOpenCVfaceRecognition
     //CameraInit();
@@ -257,6 +271,9 @@ void MainWindow::DrawWifiPage(void)
     listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     layout->addWidget(listWidget);
     wifiGroupBox->setLayout(layout);
+    //applayout->addWidget(wifiGroupBox);
+    //appbox->setLayout(applayout);
+
 }
 
 void MainWindow::wifiListUpdate(void)
@@ -313,61 +330,35 @@ void MainWindow::DrawListenEventPage(void)
     //lanlayout->addStretch();
     lanbox->setLayout(lanlayout);
 
-    //USB-1
-    usb1box = new QGroupBox(this);
-    QLabel *usb1txt = new QLabel("USB-1",this);
-    QLabel *usb1status = new QLabel(this);
-    usb1status->setFixedSize(20, 20);
-    usb1status->setStyleSheet("background-color: gray; border-radius: 10px;");
-    QHBoxLayout *usb1layout = new QHBoxLayout(this);
-    usb1layout->addWidget(usb1txt);
-    usb1layout->addWidget(usb1status);
+    //USB
+    usbbox = new QGroupBox(this);
+    usbtxt = new QLabel("USB-1",this);
+    usbstatus = new QLabel("0",this);
+    usbstatus->setFixedSize(20, 20);
+    usbstatus->setAlignment(Qt::AlignCenter);
+    usbstatus->setStyleSheet("color: black; background-color: gray; border-radius: 10px;");
+    QHBoxLayout *usblayout = new QHBoxLayout(this);
+    usblayout->addWidget(usbtxt);
+    usblayout->addWidget(usbstatus);
     //usb1layout->addStretch();
-    usb1box->setLayout(usb1layout);
-
-    //USB-2
-    usb2box = new QGroupBox(this);
-    QLabel *usb2txt = new QLabel("USB-2",this);
-    QLabel *usb2status = new QLabel(this);
-    usb2status->setFixedSize(20, 20);
-    usb2status->setStyleSheet("background-color: gray; border-radius: 10px;");
-    QHBoxLayout *usb2layout = new QHBoxLayout(this);
-    usb2layout->addWidget(usb2txt);
-    usb2layout->addWidget(usb2status);
-    //usb2layout->addStretch();
-    usb2box->setLayout(usb2layout);
-
-    //USB-3
-    usb3box = new QGroupBox(this);
-    QLabel *usb3txt = new QLabel("USB-3",this);
-    QLabel *usb3status = new QLabel(this);
-    usb3status->setFixedSize(20, 20);
-    usb3status->setStyleSheet("background-color: gray; border-radius: 10px;");
-    QHBoxLayout *usb3layout = new QHBoxLayout(this);
-    usb3layout->addWidget(usb3txt);
-    usb3layout->addWidget(usb3status);
-    //usb3layout->addStretch();
-    usb3box->setLayout(usb3layout);
-
-    //Type-C
-    typecbox = new QGroupBox(this);
-    QLabel *typectxt = new QLabel("Type-C",this);
-    QLabel *typecstatus = new QLabel(this);
-    typecstatus->setFixedSize(20, 20);
-    typecstatus->setStyleSheet("background-color: gray; border-radius: 10px;");
-    QHBoxLayout *typeclayout = new QHBoxLayout(this);
-    typeclayout->addWidget(typectxt);
-    typeclayout->addWidget(typecstatus);
-    //typeclayout->addStretch();
-    typecbox->setLayout(typeclayout);
+    usbbox->setLayout(usblayout);
 
     Eventlayout->addWidget(lanbox);
-    Eventlayout->addWidget(usb1box);
-    Eventlayout->addWidget(usb2box);
-    Eventlayout->addWidget(usb3box);
-    Eventlayout->addWidget(typecbox);
+    Eventlayout->addWidget(usbbox);
     Eventlayout->addStretch();
     ListenEventBox->setLayout(Eventlayout);
+
+    //applayout->addWidget(ListenEventBox);
+    //appbox->setLayout(applayout);
+
+    #if(_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
+    qDebug()<<"Usb Init Cnt:"<<getUSBDeviceCount();
+    if(getUSBDeviceCount()>0)
+        usbstatus->setStyleSheet("color: white; background-color: green; border-radius: 10px;");
+    else
+        usbstatus->setStyleSheet("color: black; background-color: gray; border-radius: 10px;");
+    usbstatus->setNum(getUSBDeviceCount());
+    #endif
 
     blanstatus = networkManager->isOnline();
     DrawlanStatusUpdate(blanstatus);
@@ -387,16 +378,25 @@ void MainWindow::DrawlanStatusUpdate(bool isOnline)
 
 #if(_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
 bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result){
+    int usbCnt=0;
+
     if (eventType == "windows_generic_MSG") {
         MSG *msg = static_cast<MSG *>(message);
         if (msg->message == WM_DEVICECHANGE) {
             if (msg->wParam == DBT_DEVICEARRIVAL) {
-                qDebug() << "USB plug-in cnt="<<getUSBDeviceCount();
-
-            } else if (msg->wParam == DBT_DEVICEREMOVECOMPLETE) {
-                qDebug() << "USB plug-out cnt="<<getUSBDeviceCount();
-
+                qDebug() << "USB plug-in cnt=";
+            } else if (msg->wParam == DBT_DEVICEREMOVECOMPLETE) {    
+                qDebug() << "USB plug-out cnt="<<usbCnt;
             }
+
+            usbCnt=getUSBDeviceCount();
+            qDebug()<<"Usb Cnt:"<<usbCnt;
+            if(usbCnt>0)
+                usbstatus->setStyleSheet("color: white; background-color: green; border-radius: 10px;");
+            else
+                usbstatus->setStyleSheet("color: black; background-color: gray; border-radius: 10px;");
+            usbstatus->setNum(usbCnt);
+
         }
     }
     return QWidget::nativeEvent(eventType, message, result);
@@ -405,14 +405,14 @@ bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *r
 int MainWindow::getUSBDeviceCount() {
     // Get usb device info 
     HDEVINFO deviceInfoSet = SetupDiGetClassDevs(
-        &GUID_DEVINTERFACE_USB_DEVICE,
+         &GUID_DEVINTERFACE_DISK, // &GUID_DEVINTERFACE_USB_DEVICE,
         nullptr,
         nullptr,
         DIGCF_PRESENT | DIGCF_DEVICEINTERFACE
         );
 
     if (deviceInfoSet == INVALID_HANDLE_VALUE) {
-        qWarning() << "获取设备信息集失败";
+        qWarning() << "GetDeviceInfo fail";
         return -1;
     }
 
