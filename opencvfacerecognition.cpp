@@ -1,7 +1,7 @@
 #include "opencvfacerecognition.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/videoio.hpp>
-#include <opencv2\imgproc\types_c.h>
+//#include <opencv2\imgproc\types_c.h>
 
 #include <QImage>
 #include <QtDebug>
@@ -24,8 +24,11 @@ void OpenCVfaceRecognition::run()
     qDebug()<<"OpenCVfaceRecognition Thread run!";
 
     CascadeClassifier c;
-
+#ifdef OS_UNIX
+    VideoCapture v(3);
+#else
     VideoCapture v(0);
+#endif
 
     if (!v.isOpened()) {
         return;
@@ -43,7 +46,7 @@ void OpenCVfaceRecognition::run()
     while(v.read(src))
     {
         flip(src, src, 1);
-        cvtColor(src, gray, CV_BGR2GRAY);
+        cvtColor(src, gray, cv::COLOR_BGR2GRAY);
         equalizeHist(gray, dst);
         c.detectMultiScale(dst, facesPos);
 
@@ -69,7 +72,7 @@ QImage OpenCVfaceRecognition::Mat2QImage(Mat cvImg)
     if(cvImg.channels()==3)     //3 channels color image
     {
 
-        cv::cvtColor(cvImg,cvImg,CV_BGR2RGB);
+        cv::cvtColor(cvImg,cvImg,cv::COLOR_BGR2RGB);
         qImg =QImage((const unsigned char*)(cvImg.data),
                       cvImg.cols, cvImg.rows,
                       cvImg.cols*cvImg.channels(),

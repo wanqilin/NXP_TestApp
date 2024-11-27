@@ -19,10 +19,10 @@
 #include <QBoxLayout>
 #include <QNetworkConfigurationManager>
 #include <opencv2/core/core.hpp>
-#if (_Q_OS_TYPE_ == _Q_OS_LINUX_)
+#ifdef OS_UNIX
 #include <dirent.h>
 #endif
-#if (_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
+#ifdef OS_WINDOWS
 #include <windows.h>
 #include <QDir>
 #include <QFileInfo>
@@ -36,7 +36,7 @@
 using namespace cv;
 using namespace std;
 
-class OpenCVWindow;
+//class OpenCVWindow;
 class OpenCVfaceRecognition;
 class OSDUpdateThread;
 
@@ -58,7 +58,7 @@ signals:
     void StartOSDThread(void);
 
 protected:
-#if(_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
+#ifdef OS_WINDOWS
     bool nativeEvent(const QByteArray &eventType, void *message, long *result) override;
 #endif
 
@@ -66,7 +66,7 @@ private slots:
     void PrintText(const QString &text);
     void captureImage();
     void displayImage(int id, const QImage &preview);
-    void GotoOpenCVWindow();
+    //void GotoOpenCVWindow();
     void OpenCVfaceRecognitionHandle();
     void TimerHandle();
     void OSDUpdate();
@@ -93,11 +93,11 @@ private:
     QGroupBox *usbbox;
     QBoxLayout *applayout;
     QHBoxLayout *usblayout;
-    OpenCVWindow *pOpenCVWindow;
+    //OpenCVWindow *pOpenCVWindow;
     OpenCVfaceRecognition *processor;
     OSDUpdateThread* osdupdatethread;
     QThread* qthread;
-    QNetworkConfigurationManager *networkManager;
+    //QNetworkConfigurationManager *networkManager;
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);
@@ -110,7 +110,9 @@ private:
     void DrawListenEventPage();
     void InitVariable();
     int getUSBDeviceCount();
+#ifdef OS_UNIX
     bool isUsbStorage(const std::string &devicePath);
     void USBDeviceUpdate();
+#endif
 };
 #endif // MAINWINDOW_H

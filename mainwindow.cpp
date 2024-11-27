@@ -13,7 +13,7 @@
 
 using namespace std;
 
-#if (_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
+#ifdef OS_WINDOWS
 // define GUID
 DEFINE_GUID(GUID_DEVINTERFACE_USB_DEVICE,
             0xA5DCBF10L, 0x6530, 0x11D2, 0x90, 0x1F, 0x00, 0xC0, 0x4F, 0xB9, 0x51, 0xED);
@@ -25,7 +25,7 @@ DEFINE_GUID(GUID_DEVINTERFACE_DISK,
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , pOpenCVWindow(nullptr)
+    //, pOpenCVWindow(nullptr)
 {
     this->setWindowTitle(tr("NxpTestApp"));
     this->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
@@ -49,11 +49,11 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 MainWindow::~MainWindow()
-{
-    processor->requestInterruption();
-    processor->wait();
-    qthread->requestInterruption();
-    qthread->wait();
+{    
+    //processor->requestInterruption();
+    //processor->wait();
+    //qthread->requestInterruption();
+    //qthread->->wait();
 }
 
 void MainWindow::InitVariable(void)
@@ -97,8 +97,8 @@ void MainWindow::SetSignalAndSLot(void)
     connect(osdupdatethread, &OSDUpdateThread::ReDrawOSD,this,&MainWindow::OSDUpdate);
 
     //listen network connect status
-    networkManager = new QNetworkConfigurationManager(this);
-    connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
+    //networkManager = new QNetworkConfigurationManager(this);
+    //connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
 }
 
 void MainWindow::PrintText(const QString &text)
@@ -114,7 +114,9 @@ void MainWindow::TimerHandle(void)
 void MainWindow::OSDUpdate(void)
 {
     wifiListUpdate();
+#ifdef OS_UNIX
     USBDeviceUpdate();
+#endif
 }
 
 void MainWindow::DrawClockPage(void)
@@ -245,8 +247,7 @@ void MainWindow::OpenCVfaceRecognitionHandle(void)
     connect(processor,&OpenCVfaceRecognition::frameProcessed,this,&MainWindow::displayImage);
     processor->start();
 }
-
-
+/*
 void MainWindow::GotoOpenCVWindow()
 {
     if(!pOpenCVWindow)
@@ -260,6 +261,7 @@ void MainWindow::GotoOpenCVWindow()
     pOpenCVWindow->raise();    //front desk
     pOpenCVWindow->activateWindow();
 }
+*/
 
 void MainWindow::DrawWifiPage(void)
 {
@@ -295,10 +297,8 @@ QStringList  MainWindow::getWifiList(void)
 {
     QStringList wifiList;
     QProcess process;
-#if(_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
+#ifdef OS_WINDOWS
     process.start("netsh", QStringList() << "wlan" << "show" << "network");
-#else
-#endif
     process.waitForFinished();
 
     QString output = process.readAllStandardOutput();
@@ -312,6 +312,24 @@ QStringList  MainWindow::getWifiList(void)
             }
         }
     }
+#else
+    process.start("nmcli", QStringList() << "d" << "wifi" << "list");
+    process.waitForFinished();
+    QTextStream stream(process.readAllStandardOutput());
+
+    while (!stream.atEnd()) {
+        QString line = stream.readLine();
+        
+        if (line.startsWith("SSID")) continue; // skip table
+
+        QStringList fields = line.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+        //qDebug()<<fields;
+        if (fields.size() > 0) {
+            wifiList.append(fields[1]); // add SSID
+        }
+    }
+#endif
+
     return wifiList;
 }
 
@@ -360,9 +378,8 @@ void MainWindow::DrawListenEventPage(void)
     else
         usbstatus->setStyleSheet("color: black; background-color: gray; border-radius: 10px;");
     usbstatus->setNum(getUSBDeviceCount());
-
-    blanstatus = networkManager->isOnline();
-    DrawlanStatusUpdate(blanstatus);
+    //blanstatus = networkManager->isOnline();
+    //DrawlanStatusUpdate(blanstatus);
 
 }
 
@@ -377,7 +394,7 @@ void MainWindow::DrawlanStatusUpdate(bool isOnline)
     }
 }
 
-#if(_Q_OS_TYPE_ == _Q_OS_WINDOWS_)
+#ifdef OS_WINDOWS
 bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result){
     int usbCnt=0;
 
@@ -385,9 +402,9 @@ bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *r
         MSG *msg = static_cast<MSG *>(message);
         if (msg->message == WM_DEVICECHANGE) {
             if (msg->wParam == DBT_DEVICEARRIVAL) {
-                qDebug() << "USB plug-in cnt=";
+                qDebug() << "USB plug-in";
             } else if (msg->wParam == DBT_DEVICEREMOVECOMPLETE) {    
-                qDebug() << "USB plug-out cnt="<<usbCnt;
+                qDebug() << "USB plug-out";
             }
 
             usbCnt=getUSBDeviceCount();
@@ -430,7 +447,8 @@ int MainWindow::getUSBDeviceCount() {
     SetupDiDestroyDeviceInfoList(deviceInfoSet);
     return deviceCount;
 }
-#else
+#endif 
+#ifdef OS_UNIX
 bool MainWindow::isUsbStorage(const std::string& devicePath) {
     std::string usbPath = "/sys/class/block/" + devicePath + "/device";
     DIR* dir = opendir(usbPath.c_str());
@@ -461,7 +479,7 @@ int MainWindow::getUSBDeviceCount() {
 
         if (isUsbStorage(deviceName)) {
             usbCount++;
-            qDebug() << "Found USB storage: " << deviceName.c_str();
+            //qDebug() << "Found USB storage: " << deviceName.c_str();
         }
     }
 
@@ -474,7 +492,7 @@ void MainWindow::USBDeviceUpdate(void)
     int usbCnt=0;
 
     usbCnt=getUSBDeviceCount();
-    qDebug()<<"Usb Cnt:"<<usbCnt;
+    //qDebug()<<"Usb Cnt:"<<usbCnt;
     if(usbCnt>0)
         usbstatus->setStyleSheet("color: white; background-color: green; border-radius: 10px;");
     else
