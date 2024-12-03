@@ -68,9 +68,9 @@ void MainWindow::DrawOSDInterface(void)
     applayout = new QBoxLayout(QBoxLayout::TopToBottom,this);
 
 
-    this->displayTitle = new QLabel("TestApp",this);
-    this->displayTitle->setGeometry(560,0,200,50);
-    this->displayTitle->setFont(QFont("Arial",14,QFont::Bold));
+    this->displayTitle = new QLabel("NxpTestApp",this);
+    this->displayTitle->setGeometry(530,50,200,50);
+    this->displayTitle->setFont(QFont("Arial",16,QFont::Bold));
     //applayout->addWidget(displayTitle);
     //appbox->setLayout(applayout);
 
@@ -80,8 +80,14 @@ void MainWindow::DrawOSDInterface(void)
     //draw wifi
     DrawWifiPage();
 
+    //draw BT
+    DrawBtPage();
+
     //Draw Listen event
     DrawListenEventPage();
+
+    //Draw Audio
+    DrawAudioPage();
 
     //draw camera
     DrawCameraPage();
@@ -124,7 +130,7 @@ void MainWindow::DrawClockPage(void)
     //draw lcdnumber
     this->lcdnumber = new QLCDNumber(19,this);
     this->lcdnumber->setSegmentStyle(QLCDNumber::Flat);
-    this->lcdnumber->setGeometry(550,60,180,50);
+    this->lcdnumber->setGeometry(500,160,180,50);
     //applayout->addWidget(lcdnumber);
     //appbox->setLayout(applayout);
 }
@@ -139,7 +145,7 @@ void MainWindow::ClockUpdate(void)
 void MainWindow::DrawCameraPage(void)
 {
     QGroupBox *CameraGroupBox = new QGroupBox("Camera",this);
-    CameraGroupBox->setGeometry(940,0,350,600);
+    CameraGroupBox->setGeometry(720,20,560,445);
     QVBoxLayout *Cameralayout = new QVBoxLayout(this);
 
     QPalette palette;
@@ -148,31 +154,33 @@ void MainWindow::DrawCameraPage(void)
     //Camera View
     CameraView = new QLabel("No Data!",this);
     CameraView->setPalette(palette);
-    CameraView->setFixedSize(320,240);
+    CameraView->setFixedSize(540,405);
     CameraView->setAutoFillBackground(true);
     CameraView->setPalette(palette);
     CameraView->setAlignment(Qt::AlignCenter);
 
     //MatchImage
+    /*
     MatchImage = new QLabel("No Data!",this);
     MatchImage->setPalette(palette);
     MatchImage->setFixedSize(320,240);
     MatchImage->setAutoFillBackground(true);
     MatchImage->setPalette(palette);
     MatchImage->setAlignment(Qt::AlignCenter);
-
+    */
     //CaptureButton
+    /*
     captureButton= new QPushButton("Capture", this);
     captureButton->resize(180,50);
-
+    */
    //OpenCVButton
     //OpenCVButton = new QPushButton("GotoOpenCV",this);
     //OpenCVButton->resize(180,50);
     //connect(OpenCVButton,&QPushButton::clicked,this,&MainWindow::GotoOpenCVWindow);
 
     Cameralayout->addWidget(CameraView);
-    Cameralayout->addWidget(MatchImage);
-    Cameralayout->addWidget(captureButton);
+    //Cameralayout->addWidget(MatchImage);
+    //Cameralayout->addWidget(captureButton);
     //Cameralayout->addWidget(OpenCVButton);
 
     CameraGroupBox->setLayout(Cameralayout);
@@ -267,15 +275,15 @@ void MainWindow::DrawWifiPage(void)
 {
     QGroupBox *wifiGroupBox = new QGroupBox("Wifi List",this);
     wifiGroupBox->setGeometry(10,20,220,280);
-    QVBoxLayout *layout = new QVBoxLayout(this);
-    listWidget = new QListWidget(this);
-    listWidget->setFixedSize(150, 200);
-    listWidget->setMinimumSize(150, 200);
-    listWidget->setMaximumSize(200, 220);
-    listWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    listWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    layout->addWidget(listWidget);
-    wifiGroupBox->setLayout(layout);
+    QVBoxLayout *Wifilayout = new QVBoxLayout(this);
+    WifilistWidget = new QListWidget(this);
+    WifilistWidget->setFixedSize(150, 200);
+    WifilistWidget->setMinimumSize(150, 200);
+    WifilistWidget->setMaximumSize(200, 220);
+    WifilistWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    WifilistWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    Wifilayout->addWidget(WifilistWidget);
+    wifiGroupBox->setLayout(Wifilayout);
     //applayout->addWidget(wifiGroupBox);
     //appbox->setLayout(applayout);
 
@@ -283,13 +291,13 @@ void MainWindow::DrawWifiPage(void)
 
 void MainWindow::wifiListUpdate(void)
 {
-    this->listWidget->clear();
+    this->WifilistWidget->clear();
     //qDebug()<<"wifi list update!";
     // get wifi list
     QStringList wifiList = getWifiList();
     for (const QString &wifi : wifiList) {
         //qDebug()<<wifi;
-        this->listWidget->addItem(wifi);
+        this->WifilistWidget->addItem(wifi);
     }
 }
 
@@ -331,6 +339,24 @@ QStringList  MainWindow::getWifiList(void)
 #endif
 
     return wifiList;
+}
+
+void MainWindow::DrawBtPage(void)
+{
+    QGroupBox *BtGroupBox = new QGroupBox("BT List",this);
+    BtGroupBox->setGeometry(240,20,220,280);
+    QVBoxLayout *Btlayout = new QVBoxLayout(this);
+    BtlistWidget = new QListWidget(this);
+    BtlistWidget->setFixedSize(150, 200);
+    BtlistWidget->setMinimumSize(150, 200);
+    BtlistWidget->setMaximumSize(200, 220);
+    BtlistWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    BtlistWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    Btlayout->addWidget(BtlistWidget);
+    BtGroupBox->setLayout(Btlayout);
+    //applayout->addWidget(wifiGroupBox);
+    //appbox->setLayout(applayout);
+
 }
 
 void MainWindow::DrawListenEventPage(void)
@@ -500,3 +526,122 @@ void MainWindow::USBDeviceUpdate(void)
     usbstatus->setNum(usbCnt);
 }
 #endif
+
+void MainWindow:: recordAudio(void)
+{
+
+#ifdef OS_WINDOWS
+    QString outputFile = "audio_output.mp3";
+    AudiofileName = QFileDialog::getSaveFileName(this, "Save Audio File", outputFile, "*.mp3");
+#else
+    AudiofileName = "/usr/bin/audio_output.mp3"
+#endif
+    if (!AudiofileName.isEmpty()) {
+        m_pAudioRecorder->setOutputLocation(QUrl::fromLocalFile(AudiofileName));
+        m_pAudioRecorder->setAudioInput(m_pAudioRecorder->defaultAudioInput());
+
+        QAudioEncoderSettings encoderSettings;
+        encoderSettings.setCodec("audio/mpeg");
+        encoderSettings.setSampleRate(44100);
+        encoderSettings.setChannelCount(2);
+        encoderSettings.setBitRate(128000);
+        encoderSettings.setQuality(QMultimedia::HighQuality);
+        m_pAudioRecorder->setAudioSettings(encoderSettings);
+
+        if (m_pAudioRecorder->state() == QMediaRecorder::StoppedState){
+            m_pAudioRecorder->record();
+            qDebug() << "Recording started to" << AudiofileName;
+            qDebug() << "Current recorder state:" << m_pAudioRecorder->state();
+        }
+        else{
+            qDebug() << "Recorder is already in use or an error occurred.";
+        }
+    }
+else {
+        qDebug() << "Recording cancelled.";
+    }
+}
+
+void MainWindow::playAudio(void)
+{
+    QString fileName = QFileDialog::getOpenFileName(this, "Open Audio File", "", "*.mp3 *.wav");
+    if (!fileName.isEmpty()) {
+        audioplayer->setMedia(QUrl::fromLocalFile(fileName));
+        audioplayer->play();
+        qDebug() << "Playing audio from" << fileName;
+    }
+}
+
+void MainWindow::stopRecording()
+{
+    if (m_pAudioRecorder->state() == QMediaRecorder::RecordingState) {
+        m_pAudioRecorder->stop();
+        if (QFile::exists(AudiofileName)) {
+            qDebug() << "Recording successfully saved to:" << AudiofileName;
+        } else {
+            qDebug() << "Recording failed. File not found at:" << AudiofileName;
+        }
+    } else {
+        qDebug() << "No active recording to stop.";
+    }
+}
+void MainWindow::onStateChanged(QMediaRecorder::State state)
+{
+    qDebug() << "Recording state:"<< state;
+}
+
+void MainWindow::onDurationChanged(qint64 duration)
+{
+    //record time
+    qDebug() << "Record:"<< duration;
+    AudioRecordButton->setText(QString("Recorded %1 seconds").arg(duration / 1000) ) ;
+}
+void MainWindow::DrawAudioPage(void)
+{
+    //init class
+    audioplayer = new QMediaPlayer(this);
+    audiorecorder = new QMediaRecorder(audioplayer,this);
+
+    m_pAudioRecorder = new QAudioRecorder (this) ;
+
+   /*
+    for ( QString &device : m_pAudioRecorder->audioInputs())
+    {
+        qDebug() << "device:" << device;
+        //ui->comboxDevices->addItem (device);
+    }
+
+    for ( QString &codecName : m_pAudioRecorder->supportedAudioCodecs () )
+    {
+        qDebug() << "codecName:" << codecName;
+       // ui->comboxCodec->addItem (codecName) ;
+    }
+  */
+    connect(m_pAudioRecorder, &QAudioRecorder::stateChanged, this, &MainWindow::onStateChanged);
+    connect (m_pAudioRecorder, &QAudioRecorder::durationChanged, this, &MainWindow::onDurationChanged);
+
+
+    QGroupBox *AudioGroupBox = new QGroupBox("Audio",this);
+    AudioGroupBox->setGeometry(1030,500,200,200);
+
+    Audiolayout = new QVBoxLayout(this);
+
+    //AddRecord
+    AudioRecordButton = new QPushButton("Record Audio", this);
+    connect(AudioRecordButton, &QPushButton::clicked, this, &MainWindow::recordAudio);
+    Audiolayout->addWidget(AudioRecordButton);
+
+    //add stopRecord
+    stopRecordButton = new QPushButton("Stop Recording", this);
+    connect(stopRecordButton, &QPushButton::clicked, this, &MainWindow::stopRecording);
+    Audiolayout->addWidget(stopRecordButton);
+
+    //AddPlayButton
+    AudioPlayButton = new QPushButton("Play Audio", this);
+    connect(AudioPlayButton, &QPushButton::clicked, this, &MainWindow::playAudio);
+    Audiolayout->addWidget(AudioPlayButton);
+
+    AudioGroupBox->setLayout(Audiolayout);
+}
+
+

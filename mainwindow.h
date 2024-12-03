@@ -30,8 +30,13 @@
 #include <SetupAPI.h>
 #include <initguid.h>
 #include <devguid.h>
+#include <QAudioRecorder>
 #endif
 #include "osdupdatethread.h"
+#include <QMediaPlayer>
+#include <QMediaRecorder>
+#include <QAudioEncoderSettings>
+#include <QFileDialog>
 
 using namespace cv;
 using namespace std;
@@ -71,12 +76,20 @@ private slots:
     void TimerHandle();
     void OSDUpdate();
     void DrawlanStatusUpdate(bool isOnline);
+    void recordAudio();
+    void playAudio();
+    void stopRecording();
 private:
     bool blanstatus;
+    QString AudiofileName;
     QPushButton *captureButton;
     QPushButton *OpenCVButton;
+    QPushButton *AudioPlayButton;
+    QPushButton *AudioRecordButton;
+    QPushButton *stopRecordButton;
     QLCDNumber *lcdnumber;
-    QListWidget *listWidget;
+    QListWidget *WifilistWidget;
+    QListWidget *BtlistWidget;
     QLabel *displayTitle;
     QTimer *m_timer;
     QCamera *camera;
@@ -93,11 +106,15 @@ private:
     QGroupBox *usbbox;
     QBoxLayout *applayout;
     QHBoxLayout *usblayout;
+    QVBoxLayout *Audiolayout;
     //OpenCVWindow *pOpenCVWindow;
     OpenCVfaceRecognition *processor;
     OSDUpdateThread* osdupdatethread;
     QThread* qthread;
     //QNetworkConfigurationManager *networkManager;
+    QMediaPlayer *audioplayer;
+    QMediaRecorder *audiorecorder;
+    QAudioRecorder  * m_pAudioRecorder;
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);
@@ -114,5 +131,9 @@ private:
     bool isUsbStorage(const std::string &devicePath);
     void USBDeviceUpdate();
 #endif
+    void DrawAudioPage();
+    void DrawBtPage();
+    void onStateChanged(QMediaRecorder::State state);
+    void onDurationChanged(qint64 duration);
 };
 #endif // MAINWINDOW_H
