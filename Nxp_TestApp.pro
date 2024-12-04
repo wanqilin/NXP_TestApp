@@ -36,14 +36,14 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     opencvfacerecognition.cpp \
-    osdupdatethread.cpp
+    wifiworkthread.cpp
 
 HEADERS += \
     # OpenCVWindow.h \
     mainwindow.h \
     opencvfacerecognition.h \
-    osdupdatethread.h \
-    sw_app_config.h
+    sw_app_config.h \
+    wifiworkthread.h
 
 
 

@@ -8,7 +8,6 @@
 #include <QPalette>
 #include <QVBoxLayout>
 
-#include <QProcess>
 #include <QGroupBox>
 
 using namespace std;
@@ -31,21 +30,14 @@ MainWindow::MainWindow(QWidget *parent)
     this->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
     InitVariable();
 
-    //SetTimer
-    m_timer = new QTimer(this);
-    m_timer->setSingleShot(false);  //Non-single trigger
-    m_timer->setInterval( 1*1000 );
-    connect(m_timer, SIGNAL(timeout()), this, SLOT(TimerHandle()));
-    m_timer->start();
-
-
-    osdupdatethread = new OSDUpdateThread();
     qthread = new QThread(this);
-    osdupdatethread->moveToThread(qthread);
-    qthread->start();
+    pWifiWorkThread = new WifiWorkThread();
+    pWifiWorkThread->moveToThread(qthread);
 
-    SetSignalAndSLot();
     DrawOSDInterface();
+    SetSignalAndSLot();
+
+    qthread->start();
 }
 
 MainWindow::~MainWindow()
@@ -67,8 +59,7 @@ void MainWindow::DrawOSDInterface(void)
     appbox->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
     applayout = new QBoxLayout(QBoxLayout::TopToBottom,this);
 
-
-    this->displayTitle = new QLabel("NxpTestApp",this);
+    this->displayTitle = new QLabel("TestApp",this);
     this->displayTitle->setGeometry(530,50,200,50);
     this->displayTitle->setFont(QFont("Arial",16,QFont::Bold));
     //applayout->addWidget(displayTitle);
@@ -91,20 +82,21 @@ void MainWindow::DrawOSDInterface(void)
 
     //draw camera
     DrawCameraPage();
-
-    emit StartOSDThread();
 }
 
 void MainWindow::SetSignalAndSLot(void)
 {
-    connect(this,&MainWindow::StartOpenCVfaceRecognition,this,&MainWindow::OpenCVfaceRecognitionHandle);
     connect(qthread, &QThread::finished, qthread, &QThread::deleteLater);
-    connect(this, &MainWindow::StartOSDThread, osdupdatethread, &OSDUpdateThread::working);
-    connect(osdupdatethread, &OSDUpdateThread::ReDrawOSD,this,&MainWindow::OSDUpdate);
-
-    //listen network connect status
-    //networkManager = new QNetworkConfigurationManager(this);
-    //connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
+    //opencv slot
+    connect(qthread, &QThread::started,this,&MainWindow::OpenCVfaceRecognitionHandle);
+    //wifi slot
+    connect(qthread, &QThread::started, pWifiWorkThread, &WifiWorkThread::process);
+    connect(pWifiWorkThread, &WifiWorkThread::RefreshOSD, this, &MainWindow::wifiListUpdate);
+    //network slot
+    connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
+    //Audio slot
+    connect(m_pAudioRecorder, &QAudioRecorder::stateChanged, this, &MainWindow::onStateChanged);
+    connect (m_pAudioRecorder, &QAudioRecorder::durationChanged, this, &MainWindow::onDurationChanged);
 }
 
 void MainWindow::PrintText(const QString &text)
@@ -112,14 +104,8 @@ void MainWindow::PrintText(const QString &text)
     qDebug()<<text;
 }
 
-void MainWindow::TimerHandle(void)
-{    
-    ClockUpdate();
-}
-
 void MainWindow::OSDUpdate(void)
 {
-    wifiListUpdate();
 #ifdef OS_UNIX
     USBDeviceUpdate();
 #endif
@@ -133,6 +119,13 @@ void MainWindow::DrawClockPage(void)
     this->lcdnumber->setGeometry(500,160,180,50);
     //applayout->addWidget(lcdnumber);
     //appbox->setLayout(applayout);
+
+    //SetTimer
+    m_timer = new QTimer(this);
+    m_timer->setSingleShot(false);  //Non-single trigger
+    m_timer->setInterval( 1*1000 );
+    connect(m_timer, SIGNAL(timeout()), this, SLOT(ClockUpdate()));
+    m_timer->start();
 }
 
 void MainWindow::ClockUpdate(void)
@@ -190,7 +183,6 @@ void MainWindow::DrawCameraPage(void)
 
     //startOpenCVfaceRecognition
     //CameraInit();
-    emit StartOpenCVfaceRecognition();
 }
 
 void MainWindow::CameraInit(void)
@@ -289,56 +281,16 @@ void MainWindow::DrawWifiPage(void)
 
 }
 
-void MainWindow::wifiListUpdate(void)
+void MainWindow::wifiListUpdate(const QStringList &wifiList)
 {
-    this->WifilistWidget->clear();
     //qDebug()<<"wifi list update!";
+    this->WifilistWidget->clear();
+
     // get wifi list
-    QStringList wifiList = getWifiList();
     for (const QString &wifi : wifiList) {
         //qDebug()<<wifi;
         this->WifilistWidget->addItem(wifi);
     }
-}
-
-QStringList  MainWindow::getWifiList(void)
-{
-    QStringList wifiList;
-    QProcess process;
-#ifdef OS_WINDOWS
-    process.start("netsh", QStringList() << "wlan" << "show" << "network");
-    process.waitForFinished();
-
-    QString output = process.readAllStandardOutput();
-    QStringList lines = output.split('\n');
-
-    for (const QString &line : lines) {
-        if (line.contains("SSID")) {
-            QStringList parts = line.split(':');
-            if (parts.size() > 1) {
-                wifiList.append(parts[1].trimmed());
-            }
-        }
-    }
-#else
-    process.start("nmcli", QStringList() << "d" << "wifi" << "list");
-    process.waitForFinished();
-    QTextStream stream(process.readAllStandardOutput());
-
-    while (!stream.atEnd()) {
-        QString line = stream.readLine();
-        
-        if (line.startsWith("SSID")) continue; // skip table
-
-        QStringList fields = line.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
-        //qDebug()<<fields;
-        if (fields.size() > 0) {
-            wifiList.append(fields[1]); // add SSID
-        }
-    }
-#endif
-
-    return wifiList;
 }
 
 void MainWindow::DrawBtPage(void)
@@ -361,6 +313,8 @@ void MainWindow::DrawBtPage(void)
 
 void MainWindow::DrawListenEventPage(void)
 {
+    networkManager = new QNetworkConfigurationManager(this);
+
     QGroupBox *ListenEventBox = new QGroupBox("Event",this);
     ListenEventBox->setGeometry(10,320,120,240);
     QVBoxLayout *Eventlayout = new QVBoxLayout(this);
@@ -617,10 +571,6 @@ void MainWindow::DrawAudioPage(void)
        // ui->comboxCodec->addItem (codecName) ;
     }
   */
-    connect(m_pAudioRecorder, &QAudioRecorder::stateChanged, this, &MainWindow::onStateChanged);
-    connect (m_pAudioRecorder, &QAudioRecorder::durationChanged, this, &MainWindow::onDurationChanged);
-
-
     QGroupBox *AudioGroupBox = new QGroupBox("Audio",this);
     AudioGroupBox->setGeometry(1030,500,200,200);
 

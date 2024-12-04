@@ -1,7 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "sw_app_config.h"
 #include <QLCDNumber>
 #include <QLabel>
 #include <QLineEdit>
@@ -32,18 +31,21 @@
 #include <devguid.h>
 #include <QAudioRecorder>
 #endif
-#include "osdupdatethread.h"
 #include <QMediaPlayer>
 #include <QMediaRecorder>
 #include <QAudioEncoderSettings>
 #include <QFileDialog>
+
+#include "sw_app_config.h"
+#include "wifiworkthread.h"
+
 
 using namespace cv;
 using namespace std;
 
 //class OpenCVWindow;
 class OpenCVfaceRecognition;
-class OSDUpdateThread;
+class WifiWorkThread;
 
 class MainWindow : public QMainWindow
 {
@@ -59,7 +61,6 @@ public:
     void CameraInit();
 
 signals:
-    void StartOpenCVfaceRecognition(void);
     void StartOSDThread(void);
 
 protected:
@@ -72,13 +73,13 @@ private slots:
     void captureImage();
     void displayImage(int id, const QImage &preview);
     //void GotoOpenCVWindow();
+    void ClockUpdate(void);
     void OpenCVfaceRecognitionHandle();
-    void TimerHandle();
-    void OSDUpdate();
     void DrawlanStatusUpdate(bool isOnline);
     void recordAudio();
     void playAudio();
     void stopRecording();
+    void wifiListUpdate(const QStringList &wifiList);
 private:
     bool blanstatus;
     QString AudiofileName;
@@ -109,9 +110,9 @@ private:
     QVBoxLayout *Audiolayout;
     //OpenCVWindow *pOpenCVWindow;
     OpenCVfaceRecognition *processor;
-    OSDUpdateThread* osdupdatethread;
+    WifiWorkThread *pWifiWorkThread;
     QThread* qthread;
-    //QNetworkConfigurationManager *networkManager;
+    QNetworkConfigurationManager *networkManager;
     QMediaPlayer *audioplayer;
     QMediaRecorder *audiorecorder;
     QAudioRecorder  * m_pAudioRecorder;
@@ -119,8 +120,6 @@ private:
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);
     QStringList getWifiList();
-    void wifiListUpdate();
-    void ClockUpdate();
     void DrawClockPage();
     void DrawWifiPage();
     void DrawCameraPage();
@@ -135,5 +134,6 @@ private:
     void DrawBtPage();
     void onStateChanged(QMediaRecorder::State state);
     void onDurationChanged(qint64 duration);
+    void OSDUpdate();
 };
 #endif // MAINWINDOW_H
