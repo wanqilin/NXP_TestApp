@@ -21,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
     DrawOSDInterface();
 
     pOsdEventThread = new QThread();
-    pOsdEventWork = new OsdEventWork();
+    pOsdEventWork = new OsdEventWork(this);
     pOsdEventWork->moveToThread(pOsdEventThread);
 
     pWirelessDeviceWorkThread = new WirelessDeviceWorkThread();
@@ -98,10 +98,13 @@ void MainWindow::SetSignalAndSLot(void)
     //network slot
     connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
     //Audio slot
-    connect(AudioRecordButton, &QPushButton::clicked, this, &OsdEventWork::recordAudio);
-    connect(stopRecordButton, &QPushButton::clicked, this, &OsdEventWork::stopRecording);
-    connect(AudioPlayButton, &QPushButton::clicked, this, &OsdEventWork::playAudio);
-
+    connect(AudioRecordButton, &QPushButton::clicked, pOsdEventWork,&OsdEventWork::TestSlot);
+    connect(AudioRecordButton, &QPushButton::clicked, this, &MainWindow::AudioRecordClicked);
+    connect(stopRecordButton, &QPushButton::clicked, this, &MainWindow::AudioStopClicked);
+    connect(AudioPlayButton, &QPushButton::clicked, this, &MainWindow::AudioPlayClicked);
+    connect(this,&MainWindow::AudioRecordClickedSignal,pOsdEventWork,&OsdEventWork::recordAudio);
+    connect(this,&MainWindow::AudioStopClickedSignal,pOsdEventWork,&OsdEventWork::stopRecording);
+    connect(this,&MainWindow::AudioPlayClickedSignal,pOsdEventWork,&OsdEventWork::playAudio);
     //connect(m_pAudioRecorder, &QAudioRecorder::stateChanged, this, &MainWindow::onStateChanged);
     connect (pOsdEventWork, &OsdEventWork::RefreshdurationChanged, this, &MainWindow::AudioRecordDurationUpdate);
 }
@@ -371,9 +374,22 @@ void MainWindow::UsbDeviceUpdate(int usbCnt)
     usbstatus->setNum(usbCnt);
 }
 
-void MainWindow::onStateChanged(QMediaRecorder::State state)
+void MainWindow::AudioRecordClicked(void)
 {
-    qDebug() << "Recording state:"<< state;
+    qDebug()<<"Record Clicked";
+    emit AudioRecordClickedSignal(this);
+}
+
+void MainWindow::AudioStopClicked(void)
+{
+    qDebug()<<"Stop Clicked";
+    emit AudioStopClickedSignal(this);
+}
+
+void MainWindow::AudioPlayClicked(void)
+{
+    qDebug()<<"Play Clicked";
+    emit AudioPlayClickedSignal(this);
 }
 
 void MainWindow::AudioRecordDurationUpdate(qint64 duration)
@@ -384,25 +400,6 @@ void MainWindow::AudioRecordDurationUpdate(qint64 duration)
 }
 void MainWindow::DrawAudioPage(void)
 {
-    //init class
-    audioplayer = new QMediaPlayer(this);
-    audiorecorder = new QMediaRecorder(audioplayer,this);
-
-    m_pAudioRecorder = new QAudioRecorder (this) ;
-
-   /*
-    for ( QString &device : m_pAudioRecorder->audioInputs())
-    {
-        qDebug() << "device:" << device;
-        //ui->comboxDevices->addItem (device);
-    }
-
-    for ( QString &codecName : m_pAudioRecorder->supportedAudioCodecs () )
-    {
-        qDebug() << "codecName:" << codecName;
-       // ui->comboxCodec->addItem (codecName) ;
-    }
-  */
     QGroupBox *AudioGroupBox = new QGroupBox("Audio",this);
     AudioGroupBox->setGeometry(1030,500,200,200);
 

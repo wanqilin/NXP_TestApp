@@ -1,19 +1,28 @@
 #include "osdeventwork.h"
+#include <QPushButton>
 #include <QtDebug>
 
-OsdEventWork::OsdEventWork()
+OsdEventWork::OsdEventWork(QWidget *parent)
 {
     qDebug() << "OsdEventThread is run!";
+    //init class
+    audioplayer = new QMediaPlayer(static_cast<QWidget*>(parent));
+    audiorecorder = new QMediaRecorder(audioplayer,static_cast<QWidget*>(parent));
+    m_pAudioRecorder = new QAudioRecorder (static_cast<QWidget*>(parent));
 }
 
 OsdEventWork::~OsdEventWork() {}
 
-void OsdEventWork:: recordAudio(void)
+void OsdEventWork::TestSlot(void)
 {
-
+    qDebug()<< "TestSlot Slot";
+}
+void OsdEventWork:: recordAudio(QWidget *parent)
+{
+    qDebug()<< "recordAudio Slot";
 #ifdef OS_WINDOWS
     QString outputFile = "audio_output.mp3";
-    AudiofileName = QFileDialog::getSaveFileName(this, "Save Audio File", outputFile, "*.mp3");
+    AudiofileName = QFileDialog::getSaveFileName(static_cast<QWidget*>(parent), "Save Audio File", outputFile, "*.mp3");
 #else
     AudiofileName = "/usr/bin/audio_output.mp3"
 #endif
@@ -43,9 +52,10 @@ void OsdEventWork:: recordAudio(void)
     }
 }
 
-void OsdEventWork::playAudio(void)
+void OsdEventWork::playAudio(QWidget *parent)
 {
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Audio File", "", "*.mp3 *.wav");
+    qDebug()<< "playAudio Slot";
+    QString fileName = QFileDialog::getOpenFileName(static_cast<QWidget*>(parent), "Open Audio File", "", "*.mp3 *.wav");
     if (!fileName.isEmpty()) {
         audioplayer->setMedia(QUrl::fromLocalFile(fileName));
         audioplayer->play();
@@ -53,8 +63,9 @@ void OsdEventWork::playAudio(void)
     }
 }
 
-void OsdEventWork::stopRecording()
+void OsdEventWork::stopRecording(void)
 {
+    qDebug()<< "stopRecording Slot";
     if (m_pAudioRecorder->state() == QMediaRecorder::RecordingState) {
         m_pAudioRecorder->stop();
         if (QFile::exists(AudiofileName)) {

@@ -46,6 +46,10 @@ public:
     ~MainWindow();
 
     void CameraInit();
+signals:
+    void AudioRecordClickedSignal(QWidget *parent = nullptr);
+    void AudioStopClickedSignal(QWidget *parent = nullptr);
+    void AudioPlayClickedSignal(QWidget *parent = nullptr);
 
 private slots:
     void PrintText(const QString &text);
@@ -56,6 +60,10 @@ private slots:
     void DrawlanStatusUpdate(bool isOnline);
     void wifiListUpdate(const QStringList &wifiList);
     void UsbDeviceUpdate(int usbCnt);
+    void AudioRecordDurationUpdate(qint64 duration);
+    void AudioRecordClicked();
+    void AudioStopClicked();
+    void AudioPlayClicked();
 private:
     bool blanstatus;
     QPushButton *captureButton;
@@ -100,8 +108,6 @@ private:
     void InitVariable();
     void DrawAudioPage();
     void DrawBtPage();
-    void onStateChanged(QMediaRecorder::State state);
-    void onDurationChanged(qint64 duration);
     void DrawEventListenPage();
 };
 #endif // MAINWINDOW_H

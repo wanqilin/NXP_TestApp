@@ -13,7 +13,7 @@ class OsdEventWork : public QObject
     Q_OBJECT
 
 public:
-    OsdEventWork();
+    OsdEventWork(QWidget *parent = nullptr);
     ~OsdEventWork();
 
 private:
@@ -23,13 +23,13 @@ private:
     QAudioRecorder  *m_pAudioRecorder;
 
 public slots:
-    void recordAudio();
-    void playAudio();
-    void stopRecording();
+    void recordAudio(QWidget *parent = nullptr);
+    void playAudio(QWidget *parent = nullptr);
+    void stopRecording(void);
+    void TestSlot();
 
 signals:
     void RefreshdurationChanged(const qint64 duration);
-
 
 };
 #endif // OSDEVENTWORK_H
