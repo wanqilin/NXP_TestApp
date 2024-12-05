@@ -19,15 +19,11 @@
 #include <QNetworkConfigurationManager>
 #include <opencv2/core/core.hpp>
 
-#include <QMediaPlayer>
-#include <QMediaRecorder>
-#include <QAudioRecorder>
-#include <QAudioEncoderSettings>
-#include <QFileDialog>
-
 #include "sw_app_config.h"
 #include "wirelessdeviceworkthread.h"
 #include "hotplugworkthread.h"
+#include "opencvcamerathread.h"
+#include "osdeventwork.h"
 
 using namespace cv;
 using namespace std;
@@ -36,6 +32,7 @@ using namespace std;
 class OpenCVCameraThread;
 class WirelessDeviceWorkThread;
 class HotPlugWorkThread;
+class OsdEventWork;
 
 class MainWindow : public QMainWindow
 {
@@ -57,14 +54,10 @@ private slots:
     //void GotoOpenCVWindow();
     void ClockUpdate(void);
     void DrawlanStatusUpdate(bool isOnline);
-    void recordAudio();
-    void playAudio();
-    void stopRecording();
     void wifiListUpdate(const QStringList &wifiList);
     void UsbDeviceUpdate(int usbCnt);
 private:
     bool blanstatus;
-    QString AudiofileName;
     QPushButton *captureButton;
     QPushButton *OpenCVButton;
     QPushButton *AudioPlayButton;
@@ -94,10 +87,9 @@ private:
     OpenCVCameraThread *pOpenCVCameraThread;
     WirelessDeviceWorkThread *pWirelessDeviceWorkThread;
     HotPlugWorkThread *pHotPlugWorkThread;
+    QThread *pOsdEventThread;
+    OsdEventWork *pOsdEventWork;
     QNetworkConfigurationManager *networkManager;
-    QMediaPlayer *audioplayer;
-    QMediaRecorder *audiorecorder;
-    QAudioRecorder  *m_pAudioRecorder;
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);

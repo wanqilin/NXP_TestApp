@@ -1,12 +1,10 @@
 #include "mainwindow.h"
 #include "OpenCVWindow.h"
-#include "opencvcamerathread.h"
 #include <QTimer>
 #include <QtDebug>
 #include <QDateTime>
 #include <QPalette>
 #include <QVBoxLayout>
-
 #include <QGroupBox>
 
 using namespace std;
@@ -21,6 +19,10 @@ MainWindow::MainWindow(QWidget *parent)
     InitVariable();
 
     DrawOSDInterface();
+
+    pOsdEventThread = new QThread();
+    pOsdEventWork = new OsdEventWork();
+    pOsdEventWork->moveToThread(pOsdEventThread);
 
     pWirelessDeviceWorkThread = new WirelessDeviceWorkThread();
     pWirelessDeviceWorkThread->start();
@@ -96,8 +98,12 @@ void MainWindow::SetSignalAndSLot(void)
     //network slot
     connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
     //Audio slot
-    connect(m_pAudioRecorder, &QAudioRecorder::stateChanged, this, &MainWindow::onStateChanged);
-    connect (m_pAudioRecorder, &QAudioRecorder::durationChanged, this, &MainWindow::onDurationChanged);
+    connect(AudioRecordButton, &QPushButton::clicked, this, &OsdEventWork::recordAudio);
+    connect(stopRecordButton, &QPushButton::clicked, this, &OsdEventWork::stopRecording);
+    connect(AudioPlayButton, &QPushButton::clicked, this, &OsdEventWork::playAudio);
+
+    //connect(m_pAudioRecorder, &QAudioRecorder::stateChanged, this, &MainWindow::onStateChanged);
+    connect (pOsdEventWork, &OsdEventWork::RefreshdurationChanged, this, &MainWindow::AudioRecordDurationUpdate);
 }
 
 void MainWindow::PrintText(const QString &text)
@@ -365,70 +371,12 @@ void MainWindow::UsbDeviceUpdate(int usbCnt)
     usbstatus->setNum(usbCnt);
 }
 
-void MainWindow:: recordAudio(void)
-{
-
-#ifdef OS_WINDOWS
-    QString outputFile = "audio_output.mp3";
-    AudiofileName = QFileDialog::getSaveFileName(this, "Save Audio File", outputFile, "*.mp3");
-#else
-    AudiofileName = "/usr/bin/audio_output.mp3"
-#endif
-    if (!AudiofileName.isEmpty()) {
-        m_pAudioRecorder->setOutputLocation(QUrl::fromLocalFile(AudiofileName));
-        m_pAudioRecorder->setAudioInput(m_pAudioRecorder->defaultAudioInput());
-
-        QAudioEncoderSettings encoderSettings;
-        encoderSettings.setCodec("audio/mpeg");
-        encoderSettings.setSampleRate(44100);
-        encoderSettings.setChannelCount(2);
-        encoderSettings.setBitRate(128000);
-        encoderSettings.setQuality(QMultimedia::HighQuality);
-        m_pAudioRecorder->setAudioSettings(encoderSettings);
-
-        if (m_pAudioRecorder->state() == QMediaRecorder::StoppedState){
-            m_pAudioRecorder->record();
-            qDebug() << "Recording started to" << AudiofileName;
-            qDebug() << "Current recorder state:" << m_pAudioRecorder->state();
-        }
-        else{
-            qDebug() << "Recorder is already in use or an error occurred.";
-        }
-    }
-else {
-        qDebug() << "Recording cancelled.";
-    }
-}
-
-void MainWindow::playAudio(void)
-{
-    QString fileName = QFileDialog::getOpenFileName(this, "Open Audio File", "", "*.mp3 *.wav");
-    if (!fileName.isEmpty()) {
-        audioplayer->setMedia(QUrl::fromLocalFile(fileName));
-        audioplayer->play();
-        qDebug() << "Playing audio from" << fileName;
-    }
-}
-
-void MainWindow::stopRecording()
-{
-    if (m_pAudioRecorder->state() == QMediaRecorder::RecordingState) {
-        m_pAudioRecorder->stop();
-        if (QFile::exists(AudiofileName)) {
-            qDebug() << "Recording successfully saved to:" << AudiofileName;
-        } else {
-            qDebug() << "Recording failed. File not found at:" << AudiofileName;
-        }
-    } else {
-        qDebug() << "No active recording to stop.";
-    }
-}
 void MainWindow::onStateChanged(QMediaRecorder::State state)
 {
     qDebug() << "Recording state:"<< state;
 }
 
-void MainWindow::onDurationChanged(qint64 duration)
+void MainWindow::AudioRecordDurationUpdate(qint64 duration)
 {
     //record time
     qDebug() << "Record:"<< duration;
@@ -462,17 +410,14 @@ void MainWindow::DrawAudioPage(void)
 
     //AddRecord
     AudioRecordButton = new QPushButton("Record Audio", this);
-    connect(AudioRecordButton, &QPushButton::clicked, this, &MainWindow::recordAudio);
     Audiolayout->addWidget(AudioRecordButton);
 
     //add stopRecord
     stopRecordButton = new QPushButton("Stop Recording", this);
-    connect(stopRecordButton, &QPushButton::clicked, this, &MainWindow::stopRecording);
     Audiolayout->addWidget(stopRecordButton);
 
     //AddPlayButton
     AudioPlayButton = new QPushButton("Play Audio", this);
-    connect(AudioPlayButton, &QPushButton::clicked, this, &MainWindow::playAudio);
     Audiolayout->addWidget(AudioPlayButton);
 
     AudioGroupBox->setLayout(Audiolayout);

@@ -37,6 +37,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     opencvcamerathread.cpp \
+    osdeventwork.cpp \
     wirelessdeviceworkthread.cpp
 
 HEADERS += \
@@ -44,6 +45,7 @@ HEADERS += \
     hotplugworkthread.h \
     mainwindow.h \
     opencvcamerathread.h \
+    osdeventwork.h \
     sw_app_config.h \
     wirelessdeviceworkthread.h
 
