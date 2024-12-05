@@ -33,19 +33,19 @@ win32 {
 
 SOURCES += \
     # OpenCVWindow.cpp \
-    eventlistenthread.cpp \
+    hotplugworkthread.cpp \
     main.cpp \
     mainwindow.cpp \
-    opencvfacerecognition.cpp \
-    wifiworkthread.cpp
+    opencvcamerathread.cpp \
+    wirelessdeviceworkthread.cpp
 
 HEADERS += \
     # OpenCVWindow.h \
-    eventlistenthread.h \
+    hotplugworkthread.h \
     mainwindow.h \
-    opencvfacerecognition.h \
+    opencvcamerathread.h \
     sw_app_config.h \
-    wifiworkthread.h
+    wirelessdeviceworkthread.h
 
 
 

@@ -26,16 +26,16 @@
 #include <QFileDialog>
 
 #include "sw_app_config.h"
-#include "wifiworkthread.h"
-#include "eventlistenthread.h"
+#include "wirelessdeviceworkthread.h"
+#include "hotplugworkthread.h"
 
 using namespace cv;
 using namespace std;
 
 //class OpenCVWindow;
-class OpenCVfaceRecognition;
-class WifiWorkThread;
-class EventListenThread;
+class OpenCVCameraThread;
+class WirelessDeviceWorkThread;
+class HotPlugWorkThread;
 
 class MainWindow : public QMainWindow
 {
@@ -56,7 +56,6 @@ private slots:
     void displayImage(int id, const QImage &preview);
     //void GotoOpenCVWindow();
     void ClockUpdate(void);
-    void OpenCVfaceRecognitionHandle();
     void DrawlanStatusUpdate(bool isOnline);
     void recordAudio();
     void playAudio();
@@ -92,10 +91,9 @@ private:
     QHBoxLayout *usblayout;
     QVBoxLayout *Audiolayout;
     //OpenCVWindow *pOpenCVWindow;
-    OpenCVfaceRecognition *processor;
-    QThread* qthread;
-    WifiWorkThread *pWifiWorkThread;
-    EventListenThread *pEventListenThread;
+    OpenCVCameraThread *pOpenCVCameraThread;
+    WirelessDeviceWorkThread *pWirelessDeviceWorkThread;
+    HotPlugWorkThread *pHotPlugWorkThread;
     QNetworkConfigurationManager *networkManager;
     QMediaPlayer *audioplayer;
     QMediaRecorder *audiorecorder;

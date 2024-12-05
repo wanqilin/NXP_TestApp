@@ -1,26 +1,25 @@
-#include "wifiworkthread.h"
+#include "wirelessdeviceworkthread.h"
 #include <QtDebug>
 #include <QThread>
 #include <QProcess>
 
-WifiWorkThread::WifiWorkThread() {}
+WirelessDeviceWorkThread::WirelessDeviceWorkThread() {}
 
-WifiWorkThread::~WifiWorkThread() {}
+WirelessDeviceWorkThread::~WirelessDeviceWorkThread() {}
 
-void WifiWorkThread::process(void)
+void WirelessDeviceWorkThread::run()
 {
-    qDebug()<<"wifiworkThread is run!";
-    while(1)
+    qDebug()<<"WirelessDeviceWorkThread is run!";
+    while(!isInterruptionRequested())
     {
         wifiList = getWifiList();
-        if(!wifiList.isEmpty())
-            emit RefreshOSD(wifiList);
+        emit RefreshWifiOSD(wifiList);
 
         QThread::sleep(1);
     }
 }
 
-QStringList WifiWorkThread::getWifiList(void)
+QStringList WirelessDeviceWorkThread::getWifiList(void)
 {
     QStringList wifiList;
     QProcess process;

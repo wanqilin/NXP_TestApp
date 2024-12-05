@@ -1,7 +1,8 @@
-#ifndef EVENTLISTENTHREAD_H
-#define EVENTLISTENTHREAD_H
+#ifndef HOTPLUGWORKTHREAD_H
+#define HOTPLUGWORKTHREAD_H
 
 #include <QObject>
+#include <QThread>
 #ifdef OS_UNIX
 #include <dirent.h>
 #endif
@@ -15,19 +16,17 @@
 #include <devguid.h>
 #endif
 
-class EventListenThread : public QObject
+class HotPlugWorkThread : public QThread
 {
     Q_OBJECT
 
 public:
-    EventListenThread();
-    ~EventListenThread();
-
-public slots:
-    void process();
+    HotPlugWorkThread();
+    ~HotPlugWorkThread();
+    void run() override;
 
 signals:
-    void RefreshOSD(const int usbCnt);
+    void RefreshUsbOSD(const int usbCnt);
 
 private:
     int getUSBDeviceCount();
@@ -36,4 +35,4 @@ private:
 #endif
     int usbCnt;
 };
-#endif // EVENTLISTENTHREAD_H
+#endif // HOTPLUGWORKTHREAD_H

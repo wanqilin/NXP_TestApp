@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "OpenCVWindow.h"
-#include "opencvfacerecognition.h"
+#include "opencvcamerathread.h"
 #include <QTimer>
 #include <QtDebug>
 #include <QDateTime>
@@ -20,24 +20,33 @@ MainWindow::MainWindow(QWidget *parent)
     this->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
     InitVariable();
 
-    qthread = new QThread(this);
-    //pWifiWorkThread = new WifiWorkThread();
-    pEventListenThread = new EventListenThread();
-    //pWifiWorkThread->moveToThread(qthread);
-    pEventListenThread->moveToThread(qthread);
-
     DrawOSDInterface();
-    SetSignalAndSLot();
 
-    qthread->start();
+    pWirelessDeviceWorkThread = new WirelessDeviceWorkThread();
+    pWirelessDeviceWorkThread->start();
+
+    pHotPlugWorkThread = new HotPlugWorkThread();
+    pHotPlugWorkThread->start();
+
+    pOpenCVCameraThread = new OpenCVCameraThread();
+    pOpenCVCameraThread->start();
+
+    SetSignalAndSLot();
 }
 
 MainWindow::~MainWindow()
-{    
-    //processor->requestInterruption();
-    //processor->wait();
-    //qthread->requestInterruption();
-    //qthread->->wait();
+{
+    pWirelessDeviceWorkThread->quit();
+    pWirelessDeviceWorkThread->wait();
+    pWirelessDeviceWorkThread->deleteLater();
+
+    pHotPlugWorkThread->quit();
+    pHotPlugWorkThread->wait();
+    pHotPlugWorkThread->deleteLater();
+
+    pOpenCVCameraThread->quit();
+    pOpenCVCameraThread->wait();
+    pOpenCVCameraThread->deleteLater();
 }
 
 void MainWindow::InitVariable(void)
@@ -78,15 +87,12 @@ void MainWindow::DrawOSDInterface(void)
 
 void MainWindow::SetSignalAndSLot(void)
 {
-    connect(qthread, &QThread::finished, qthread, &QThread::deleteLater);
     //opencv slot
-    connect(qthread, &QThread::started,this,&MainWindow::OpenCVfaceRecognitionHandle);
+    connect(pOpenCVCameraThread,&OpenCVCameraThread::frameProcessed,this,&MainWindow::displayImage);
     //wifi slot
-    //connect(qthread, &QThread::started, pWifiWorkThread, &WifiWorkThread::process);
-    //connect(pWifiWorkThread, &WifiWorkThread::RefreshOSD, this, &MainWindow::wifiListUpdate);
-    //Event Listen Slot
-    connect(qthread, &QThread::started, pEventListenThread, &EventListenThread::process);
-    connect(pEventListenThread, &EventListenThread::RefreshOSD, this, &MainWindow::UsbDeviceUpdate);
+    connect(pWirelessDeviceWorkThread, &WirelessDeviceWorkThread::RefreshWifiOSD, this, &MainWindow::wifiListUpdate);
+    //Hot Plug Slot
+    connect(pHotPlugWorkThread, &HotPlugWorkThread::RefreshUsbOSD, this, &MainWindow::UsbDeviceUpdate);
     //network slot
     connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
     //Audio slot
@@ -228,13 +234,6 @@ void MainWindow::displayImage(int id, const QImage &preview)
     CameraView->setPixmap(QPixmap::fromImage(preview));
 }
 
-void MainWindow::OpenCVfaceRecognitionHandle(void)
-{
-    qDebug()<<"OpenCVfaceRecognitionHandle!";
-    processor = new OpenCVfaceRecognition();
-    connect(processor,&OpenCVfaceRecognition::frameProcessed,this,&MainWindow::displayImage);
-    processor->start();
-}
 /*
 void MainWindow::GotoOpenCVWindow()
 {
@@ -358,7 +357,7 @@ void MainWindow::DrawlanStatusUpdate(bool isOnline)
 
 void MainWindow::UsbDeviceUpdate(int usbCnt)
 {
-    qDebug()<<"Usb Cnt:"<<usbCnt;
+    //qDebug()<<"Usb Cnt:"<<usbCnt;
     if(usbCnt>0)
         usbstatus->setStyleSheet("color: white; background-color: green; border-radius: 10px;");
     else

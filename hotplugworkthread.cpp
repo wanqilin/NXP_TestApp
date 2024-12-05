@@ -1,4 +1,4 @@
-#include "eventlistenthread.h"
+#include "hotplugworkthread.h"
 #include <QtDebug>
 #include <QThread>
 
@@ -14,23 +14,23 @@ DEFINE_GUID(GUID_DEVINTERFACE_DISK,
 #endif
 
 
-EventListenThread::EventListenThread() {}
-EventListenThread::~EventListenThread() {}
+HotPlugWorkThread::HotPlugWorkThread() {}
+HotPlugWorkThread::~HotPlugWorkThread() {}
 
-void EventListenThread::process(void)
+void HotPlugWorkThread::run()
 {
-    qDebug()<<"EventListenThread is run!";
-    while(1)
+    qDebug()<<"HotPlugWorkThread is run!";
+    while(!isInterruptionRequested())
     {
         usbCnt = getUSBDeviceCount();
         //if(usbCnt!=0)
-        emit RefreshOSD(usbCnt);
+        emit RefreshUsbOSD(usbCnt);
         QThread::sleep(1);
     }
 }
 
 #ifdef OS_WINDOWS
-int EventListenThread::getUSBDeviceCount() {
+int HotPlugWorkThread::getUSBDeviceCount() {
     // Get usb device info
     HDEVINFO deviceInfoSet = SetupDiGetClassDevs(
         &GUID_DEVINTERFACE_DISK, // &GUID_DEVINTERFACE_USB_DEVICE,
@@ -59,7 +59,7 @@ int EventListenThread::getUSBDeviceCount() {
 }
 #endif
 #ifdef OS_UNIX
-bool EventListenThread::isUsbStorage(const std::string& devicePath) {
+bool HotPlugWorkThread::isUsbStorage(const std::string& devicePath) {
     std::string usbPath = "/sys/class/block/" + devicePath + "/device";
     DIR* dir = opendir(usbPath.c_str());
     if (dir) {

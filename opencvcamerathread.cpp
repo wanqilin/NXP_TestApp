@@ -1,4 +1,4 @@
-#include "opencvfacerecognition.h"
+#include "opencvcamerathread.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/videoio.hpp>
 //#include <opencv2\imgproc\types_c.h>
@@ -8,20 +8,17 @@
 #include <vector>
 
 
-OpenCVfaceRecognition::OpenCVfaceRecognition(QObject *parent) : QThread(parent){}
+OpenCVCameraThread::OpenCVCameraThread(QObject *parent) : QThread(parent){}
 
-OpenCVfaceRecognition::~OpenCVfaceRecognition() {
-    requestInterruption();
-    wait();
-}
+OpenCVCameraThread::~OpenCVCameraThread() {}
 
-void OpenCVfaceRecognition::run()
+void OpenCVCameraThread::run()
 {
     Mat src;
     Mat gray;
     Mat dst;
 
-    qDebug()<<"OpenCVfaceRecognition Thread run!";
+    qDebug()<<"OpenCVCameraThread Thread run!";
 
     CascadeClassifier c;
 #ifdef OS_UNIX
@@ -66,7 +63,7 @@ void OpenCVfaceRecognition::run()
     }
 }
 
-QImage OpenCVfaceRecognition::Mat2QImage(Mat cvImg)
+QImage OpenCVCameraThread::Mat2QImage(Mat cvImg)
 {
     QImage qImg;
     if(cvImg.channels()==3)     //3 channels color image
