@@ -33,6 +33,7 @@ win32 {
 
 SOURCES += \
     # OpenCVWindow.cpp \
+    eventlistenthread.cpp \
     main.cpp \
     mainwindow.cpp \
     opencvfacerecognition.cpp \
@@ -40,6 +41,7 @@ SOURCES += \
 
 HEADERS += \
     # OpenCVWindow.h \
+    eventlistenthread.h \
     mainwindow.h \
     opencvfacerecognition.h \
     sw_app_config.h \

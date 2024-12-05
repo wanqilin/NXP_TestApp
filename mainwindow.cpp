@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "OpenCVWindow.h"
-#include "osdupdatethread.h"
 #include "opencvfacerecognition.h"
 #include <QTimer>
 #include <QtDebug>
@@ -12,15 +11,6 @@
 
 using namespace std;
 
-#ifdef OS_WINDOWS
-// define GUID
-DEFINE_GUID(GUID_DEVINTERFACE_USB_DEVICE,
-            0xA5DCBF10L, 0x6530, 0x11D2, 0x90, 0x1F, 0x00, 0xC0, 0x4F, 0xB9, 0x51, 0xED);
-
-// define GUID_DEVINTERFACE_DISK check usb disk
-DEFINE_GUID(GUID_DEVINTERFACE_DISK,
-            0x53f56307,0xb6bf,0x11d0,0x94,0xf2,0x00,0xa0,0xc9,0x1e,0xfb,0x8b);
-#endif
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -31,8 +21,10 @@ MainWindow::MainWindow(QWidget *parent)
     InitVariable();
 
     qthread = new QThread(this);
-    pWifiWorkThread = new WifiWorkThread();
-    pWifiWorkThread->moveToThread(qthread);
+    //pWifiWorkThread = new WifiWorkThread();
+    pEventListenThread = new EventListenThread();
+    //pWifiWorkThread->moveToThread(qthread);
+    pEventListenThread->moveToThread(qthread);
 
     DrawOSDInterface();
     SetSignalAndSLot();
@@ -74,8 +66,8 @@ void MainWindow::DrawOSDInterface(void)
     //draw BT
     DrawBtPage();
 
-    //Draw Listen event
-    DrawListenEventPage();
+    //Draw Event Listen
+    DrawEventListenPage();
 
     //Draw Audio
     DrawAudioPage();
@@ -90,8 +82,11 @@ void MainWindow::SetSignalAndSLot(void)
     //opencv slot
     connect(qthread, &QThread::started,this,&MainWindow::OpenCVfaceRecognitionHandle);
     //wifi slot
-    connect(qthread, &QThread::started, pWifiWorkThread, &WifiWorkThread::process);
-    connect(pWifiWorkThread, &WifiWorkThread::RefreshOSD, this, &MainWindow::wifiListUpdate);
+    //connect(qthread, &QThread::started, pWifiWorkThread, &WifiWorkThread::process);
+    //connect(pWifiWorkThread, &WifiWorkThread::RefreshOSD, this, &MainWindow::wifiListUpdate);
+    //Event Listen Slot
+    connect(qthread, &QThread::started, pEventListenThread, &EventListenThread::process);
+    connect(pEventListenThread, &EventListenThread::RefreshOSD, this, &MainWindow::UsbDeviceUpdate);
     //network slot
     connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
     //Audio slot
@@ -102,13 +97,6 @@ void MainWindow::SetSignalAndSLot(void)
 void MainWindow::PrintText(const QString &text)
 {
     qDebug()<<text;
-}
-
-void MainWindow::OSDUpdate(void)
-{
-#ifdef OS_UNIX
-    USBDeviceUpdate();
-#endif
 }
 
 void MainWindow::DrawClockPage(void)
@@ -311,7 +299,7 @@ void MainWindow::DrawBtPage(void)
 
 }
 
-void MainWindow::DrawListenEventPage(void)
+void MainWindow::DrawEventListenPage(void)
 {
     networkManager = new QNetworkConfigurationManager(this);
 
@@ -352,12 +340,6 @@ void MainWindow::DrawListenEventPage(void)
     //applayout->addWidget(ListenEventBox);
     //appbox->setLayout(applayout);
 
-    qDebug()<<"Usb Init Cnt:"<<getUSBDeviceCount();
-    if(getUSBDeviceCount()>0)
-        usbstatus->setStyleSheet("color: white; background-color: green; border-radius: 10px;");
-    else
-        usbstatus->setStyleSheet("color: black; background-color: gray; border-radius: 10px;");
-    usbstatus->setNum(getUSBDeviceCount());
     //blanstatus = networkManager->isOnline();
     //DrawlanStatusUpdate(blanstatus);
 
@@ -374,112 +356,15 @@ void MainWindow::DrawlanStatusUpdate(bool isOnline)
     }
 }
 
-#ifdef OS_WINDOWS
-bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result){
-    int usbCnt=0;
-
-    if (eventType == "windows_generic_MSG") {
-        MSG *msg = static_cast<MSG *>(message);
-        if (msg->message == WM_DEVICECHANGE) {
-            if (msg->wParam == DBT_DEVICEARRIVAL) {
-                qDebug() << "USB plug-in";
-            } else if (msg->wParam == DBT_DEVICEREMOVECOMPLETE) {    
-                qDebug() << "USB plug-out";
-            }
-
-            usbCnt=getUSBDeviceCount();
-            qDebug()<<"Usb Cnt:"<<usbCnt;
-            if(usbCnt>0)
-                usbstatus->setStyleSheet("color: white; background-color: green; border-radius: 10px;");
-            else
-                usbstatus->setStyleSheet("color: black; background-color: gray; border-radius: 10px;");
-            usbstatus->setNum(usbCnt);
-
-        }
-    }
-    return QWidget::nativeEvent(eventType, message, result);
-}
-
-int MainWindow::getUSBDeviceCount() {
-    // Get usb device info 
-    HDEVINFO deviceInfoSet = SetupDiGetClassDevs(
-         &GUID_DEVINTERFACE_DISK, // &GUID_DEVINTERFACE_USB_DEVICE,
-        nullptr,
-        nullptr,
-        DIGCF_PRESENT | DIGCF_DEVICEINTERFACE
-        );
-
-    if (deviceInfoSet == INVALID_HANDLE_VALUE) {
-        qWarning() << "GetDeviceInfo fail";
-        return -1;
-    }
-
-    // loop device info
-    int deviceCount = 0;
-    SP_DEVINFO_DATA deviceInfoData;
-    deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
-
-    for (int i = 0; SetupDiEnumDeviceInfo(deviceInfoSet, i, &deviceInfoData); i++) {
-        deviceCount++;
-    }
-
-    // clean device info
-    SetupDiDestroyDeviceInfoList(deviceInfoSet);
-    return deviceCount;
-}
-#endif 
-#ifdef OS_UNIX
-bool MainWindow::isUsbStorage(const std::string& devicePath) {
-    std::string usbPath = "/sys/class/block/" + devicePath + "/device";
-    DIR* dir = opendir(usbPath.c_str());
-    if (dir) {
-        // If the device directory exists, it is a USB device
-        closedir(dir);
-        return true;
-    }
-    return false;
-}
-
-int MainWindow::getUSBDeviceCount() {
-    int usbCount = 0;
-
-    DIR* dir = opendir("/sys/class/block");
-    if (!dir) {
-        qDebug() << "Failed to open /sys/class/block";
-        return -1;
-    }
-
-    struct dirent* entry;
-    while ((entry = readdir(dir)) != nullptr) {
-        // exclude "." and ".."
-        if (entry->d_name[0] == '.')
-            continue;
-
-        std::string deviceName(entry->d_name);
-
-        if (isUsbStorage(deviceName)) {
-            usbCount++;
-            //qDebug() << "Found USB storage: " << deviceName.c_str();
-        }
-    }
-
-    closedir(dir);
-    return usbCount;
-}
-
-void MainWindow::USBDeviceUpdate(void)
+void MainWindow::UsbDeviceUpdate(int usbCnt)
 {
-    int usbCnt=0;
-
-    usbCnt=getUSBDeviceCount();
-    //qDebug()<<"Usb Cnt:"<<usbCnt;
+    qDebug()<<"Usb Cnt:"<<usbCnt;
     if(usbCnt>0)
         usbstatus->setStyleSheet("color: white; background-color: green; border-radius: 10px;");
     else
         usbstatus->setStyleSheet("color: black; background-color: gray; border-radius: 10px;");
     usbstatus->setNum(usbCnt);
 }
-#endif
 
 void MainWindow:: recordAudio(void)
 {
