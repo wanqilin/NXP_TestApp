@@ -23,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
     pOsdEventThread = new QThread();
     pOsdEventWork = new OsdEventWork(this);
     pOsdEventWork->moveToThread(pOsdEventThread);
+    pOsdEventThread->start();
 
     pWirelessDeviceWorkThread = new WirelessDeviceWorkThread();
     pWirelessDeviceWorkThread->start();
@@ -49,6 +50,10 @@ MainWindow::~MainWindow()
     pOpenCVCameraThread->quit();
     pOpenCVCameraThread->wait();
     pOpenCVCameraThread->deleteLater();
+
+    pOsdEventThread->quit();
+    pOsdEventThread->wait();
+    pOsdEventThread->deleteLater();
 }
 
 void MainWindow::InitVariable(void)
@@ -98,15 +103,15 @@ void MainWindow::SetSignalAndSLot(void)
     //network slot
     connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
     //Audio slot
-    connect(AudioRecordButton, &QPushButton::clicked, pOsdEventWork,&OsdEventWork::TestSlot);
     connect(AudioRecordButton, &QPushButton::clicked, this, &MainWindow::AudioRecordClicked);
     connect(stopRecordButton, &QPushButton::clicked, this, &MainWindow::AudioStopClicked);
     connect(AudioPlayButton, &QPushButton::clicked, this, &MainWindow::AudioPlayClicked);
     connect(this,&MainWindow::AudioRecordClickedSignal,pOsdEventWork,&OsdEventWork::recordAudio);
     connect(this,&MainWindow::AudioStopClickedSignal,pOsdEventWork,&OsdEventWork::stopRecording);
     connect(this,&MainWindow::AudioPlayClickedSignal,pOsdEventWork,&OsdEventWork::playAudio);
-    //connect(m_pAudioRecorder, &QAudioRecorder::stateChanged, this, &MainWindow::onStateChanged);
-    connect (pOsdEventWork, &OsdEventWork::RefreshdurationChanged, this, &MainWindow::AudioRecordDurationUpdate);
+    connect(pOsdEventWork,&OsdEventWork::RefreshdurationChanged,this,&MainWindow::AudioRecordDurationUpdate);
+    connect(pOsdEventWork,&OsdEventWork::RefreshPlayStatus,this,&MainWindow::AudioPlayStatusUpdate);
+    connect(pOsdEventWork,&OsdEventWork::RefreshMediaPlayStatus,this,&MainWindow::AudioPlayMediaStatusUpdate);
 }
 
 void MainWindow::PrintText(const QString &text)
@@ -376,28 +381,56 @@ void MainWindow::UsbDeviceUpdate(int usbCnt)
 
 void MainWindow::AudioRecordClicked(void)
 {
-    qDebug()<<"Record Clicked";
-    emit AudioRecordClickedSignal(this);
+#ifdef OS_WINDOWS
+    QString outputFile = "audio_output.mp3";
+    AudioRecordfileName = QFileDialog::getSaveFileName(this, "Save Audio File", outputFile, "*.mp3");
+#else
+    AudioRecordfileName = "/usr/bin/audio_output.mp3"
+#endif
+    emit AudioRecordClickedSignal(&AudioRecordfileName);
 }
 
 void MainWindow::AudioStopClicked(void)
 {
-    qDebug()<<"Stop Clicked";
-    emit AudioStopClickedSignal(this);
+    emit AudioStopClickedSignal();
+    AudioRecordButton->setText(QString("Record Audio")) ;
+    AudioPlayButton->setText(QString("Play Audio")) ;
 }
 
 void MainWindow::AudioPlayClicked(void)
 {
-    qDebug()<<"Play Clicked";
-    emit AudioPlayClickedSignal(this);
+#ifdef OS_WINDOWS
+    AudioPlayfileName = QFileDialog::getOpenFileName(this, "Open Audio File", "", "*.mp3 *.wav");
+#else
+    AudioPlayfileName = "/usr/bin/audio_output.mp3"
+#endif
+    emit AudioPlayClickedSignal(&AudioPlayfileName);
 }
 
 void MainWindow::AudioRecordDurationUpdate(qint64 duration)
 {
     //record time
-    qDebug() << "Record:"<< duration;
+    qDebug() << "AudioRecord:"<< duration;
     AudioRecordButton->setText(QString("Recorded %1 seconds").arg(duration / 1000) ) ;
 }
+
+void MainWindow::AudioPlayStatusUpdate(QMediaPlayer::State newState)
+{
+    //record time
+    qDebug() << "AudioPlayStatus:"<< newState;
+    if(newState == QMediaPlayer::PlayingState)
+        AudioPlayButton->setText(QString("Playing")) ;
+}
+
+void MainWindow::AudioPlayMediaStatusUpdate(QMediaPlayer::MediaStatus newState)
+{
+    //record time
+    qDebug() << "AudioPlayMediaStatus:"<< newState;
+    if(newState == QMediaPlayer::EndOfMedia)
+        AudioPlayButton->setText(QString("PlayDone")) ;
+}
+
+
 void MainWindow::DrawAudioPage(void)
 {
     QGroupBox *AudioGroupBox = new QGroupBox("Audio",this);

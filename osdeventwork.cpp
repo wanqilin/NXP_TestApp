@@ -9,25 +9,40 @@ OsdEventWork::OsdEventWork(QWidget *parent)
     audioplayer = new QMediaPlayer(static_cast<QWidget*>(parent));
     audiorecorder = new QMediaRecorder(audioplayer,static_cast<QWidget*>(parent));
     m_pAudioRecorder = new QAudioRecorder (static_cast<QWidget*>(parent));
+
+    connect(audioplayer, &QMediaPlayer::stateChanged, this, &OsdEventWork::onStateChanged);
+    connect(audioplayer, &QMediaPlayer::mediaStatusChanged, this, &OsdEventWork::onMediaStateChanged);
+    connect(m_pAudioRecorder, &QAudioRecorder::durationChanged, this, &OsdEventWork::onDurationChanged);
 }
 
-OsdEventWork::~OsdEventWork() {}
-
-void OsdEventWork::TestSlot(void)
+OsdEventWork::~OsdEventWork()
 {
-    qDebug()<< "TestSlot Slot";
+    qDebug() << "~OsdEventThread!";
 }
-void OsdEventWork:: recordAudio(QWidget *parent)
+
+void OsdEventWork::onStateChanged(void)
 {
-    qDebug()<< "recordAudio Slot";
-#ifdef OS_WINDOWS
-    QString outputFile = "audio_output.mp3";
-    AudiofileName = QFileDialog::getSaveFileName(static_cast<QWidget*>(parent), "Save Audio File", outputFile, "*.mp3");
-#else
-    AudiofileName = "/usr/bin/audio_output.mp3"
-#endif
-    if (!AudiofileName.isEmpty()) {
-        m_pAudioRecorder->setOutputLocation(QUrl::fromLocalFile(AudiofileName));
+    qDebug() << "audioplayer onStateChange" << audioplayer->state();
+    emit RefreshPlayStatus(audioplayer->state());
+}
+
+void OsdEventWork::onMediaStateChanged(void)
+{
+    qDebug() << "audioplayer onMediaStateChanged" << audioplayer->mediaStatus();
+    emit RefreshMediaPlayStatus(audioplayer->mediaStatus());
+}
+
+void OsdEventWork::onDurationChanged(qint64 duration)
+{
+    emit RefreshdurationChanged(duration);
+}
+
+void OsdEventWork:: recordAudio(QString *sAudiofileName)
+{
+    m_sAudiofileName = *sAudiofileName;
+
+    if (!m_sAudiofileName.isEmpty()) {
+        m_pAudioRecorder->setOutputLocation(QUrl::fromLocalFile(m_sAudiofileName));
         m_pAudioRecorder->setAudioInput(m_pAudioRecorder->defaultAudioInput());
 
         QAudioEncoderSettings encoderSettings;
@@ -40,7 +55,7 @@ void OsdEventWork:: recordAudio(QWidget *parent)
 
         if (m_pAudioRecorder->state() == QMediaRecorder::StoppedState){
             m_pAudioRecorder->record();
-            qDebug() << "Recording started to" << AudiofileName;
+            qDebug() << "Recording started to" << m_sAudiofileName;
             qDebug() << "Current recorder state:" << m_pAudioRecorder->state();
         }
         else{
@@ -52,26 +67,24 @@ void OsdEventWork:: recordAudio(QWidget *parent)
     }
 }
 
-void OsdEventWork::playAudio(QWidget *parent)
+void OsdEventWork::playAudio(QString *sAudiofileName)
 {
-    qDebug()<< "playAudio Slot";
-    QString fileName = QFileDialog::getOpenFileName(static_cast<QWidget*>(parent), "Open Audio File", "", "*.mp3 *.wav");
-    if (!fileName.isEmpty()) {
-        audioplayer->setMedia(QUrl::fromLocalFile(fileName));
+
+    if (!(*sAudiofileName).isEmpty()) {
+        audioplayer->setMedia(QUrl::fromLocalFile((*sAudiofileName)));
         audioplayer->play();
-        qDebug() << "Playing audio from" << fileName;
+        qDebug() << "Playing audio from" << (*sAudiofileName);
     }
 }
 
 void OsdEventWork::stopRecording(void)
 {
-    qDebug()<< "stopRecording Slot";
     if (m_pAudioRecorder->state() == QMediaRecorder::RecordingState) {
         m_pAudioRecorder->stop();
-        if (QFile::exists(AudiofileName)) {
-            qDebug() << "Recording successfully saved to:" << AudiofileName;
+        if (QFile::exists(m_sAudiofileName)) {
+            qDebug() << "Recording successfully saved to:" << m_sAudiofileName;
         } else {
-            qDebug() << "Recording failed. File not found at:" << AudiofileName;
+            qDebug() << "Recording failed. File not found at:" << m_sAudiofileName;
         }
     } else {
         qDebug() << "No active recording to stop.";

@@ -17,19 +17,24 @@ public:
     ~OsdEventWork();
 
 private:
-    QString AudiofileName;
     QMediaPlayer *audioplayer;
     QMediaRecorder *audiorecorder;
     QAudioRecorder  *m_pAudioRecorder;
+    QString m_sAudiofileName;
 
 public slots:
-    void recordAudio(QWidget *parent = nullptr);
-    void playAudio(QWidget *parent = nullptr);
+    void recordAudio(QString *sAudiofileName);
+    void playAudio(QString *sAudiofileName);
     void stopRecording(void);
-    void TestSlot();
 
 signals:
     void RefreshdurationChanged(const qint64 duration);
+    void RefreshPlayStatus(const QMediaPlayer::State newState);
+    void RefreshMediaPlayStatus(const QMediaPlayer::MediaStatus newState);
 
+private slots:
+    void onDurationChanged(qint64 duration);
+    void onStateChanged();
+    void onMediaStateChanged();
 };
 #endif // OSDEVENTWORK_H

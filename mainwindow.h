@@ -18,7 +18,8 @@
 #include <QBoxLayout>
 #include <QNetworkConfigurationManager>
 #include <opencv2/core/core.hpp>
-
+#include <QFileDialog>
+#include <QMediaPlayer>
 #include "sw_app_config.h"
 #include "wirelessdeviceworkthread.h"
 #include "hotplugworkthread.h"
@@ -47,9 +48,9 @@ public:
 
     void CameraInit();
 signals:
-    void AudioRecordClickedSignal(QWidget *parent = nullptr);
-    void AudioStopClickedSignal(QWidget *parent = nullptr);
-    void AudioPlayClickedSignal(QWidget *parent = nullptr);
+    void AudioRecordClickedSignal(QString *sAudiofileName);
+    void AudioStopClickedSignal(void);
+    void AudioPlayClickedSignal(QString *sAudiofileName);
 
 private slots:
     void PrintText(const QString &text);
@@ -64,8 +65,12 @@ private slots:
     void AudioRecordClicked();
     void AudioStopClicked();
     void AudioPlayClicked();
+    void AudioPlayStatusUpdate(QMediaPlayer::State newState);
+    void AudioPlayMediaStatusUpdate(QMediaPlayer::MediaStatus newState);
 private:
     bool blanstatus;
+    QString AudioRecordfileName;
+    QString AudioPlayfileName;
     QPushButton *captureButton;
     QPushButton *OpenCVButton;
     QPushButton *AudioPlayButton;
