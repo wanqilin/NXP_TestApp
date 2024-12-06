@@ -18,7 +18,9 @@ win32 {
             -lopencv_imgcodecs451 \
             -lopencv_videoio451 \
             -lopencv_objdetect451 \
-            -lsetupapi
+            -lsetupapi \
+            -liphlpapi \
+            -lws2_32
 } else:unix {
     DEFINES += OS_UNIX
     INCLUDEPATH += /usr/include/opencv4

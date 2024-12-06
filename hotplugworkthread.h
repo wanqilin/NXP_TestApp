@@ -7,6 +7,7 @@
 #include <dirent.h>
 #endif
 #ifdef OS_WINDOWS
+#include <winsock2.h>
 #include <windows.h>
 #include <QDir>
 #include <QFileInfo>
@@ -14,6 +15,7 @@
 #include <SetupAPI.h>
 #include <initguid.h>
 #include <devguid.h>
+#include <iphlpapi.h>
 #endif
 
 class HotPlugWorkThread : public QThread
@@ -27,6 +29,7 @@ public:
 
 signals:
     void RefreshUsbOSD(const int usbCnt);
+    void RefreshEthOSD(const bool bEthStatus);
 
 private:
     int getUSBDeviceCount();
@@ -34,5 +37,6 @@ private:
     bool isUsbStorage(const std::string &devicePath);
 #endif
     int usbCnt;
+    void getEthernetStatus();
 };
 #endif // HOTPLUGWORKTHREAD_H

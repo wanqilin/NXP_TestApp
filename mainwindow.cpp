@@ -100,8 +100,7 @@ void MainWindow::SetSignalAndSLot(void)
     connect(pWirelessDeviceWorkThread, &WirelessDeviceWorkThread::RefreshWifiOSD, this, &MainWindow::wifiListUpdate);
     //Hot Plug Slot
     connect(pHotPlugWorkThread, &HotPlugWorkThread::RefreshUsbOSD, this, &MainWindow::UsbDeviceUpdate);
-    //network slot
-    connect(networkManager, &QNetworkConfigurationManager::onlineStateChanged, this, &MainWindow::DrawlanStatusUpdate);
+    connect(pHotPlugWorkThread, &HotPlugWorkThread::RefreshEthOSD, this, &MainWindow::DrawlanStatusUpdate);
     //Audio slot
     connect(AudioRecordButton, &QPushButton::clicked, this, &MainWindow::AudioRecordClicked);
     connect(stopRecordButton, &QPushButton::clicked, this, &MainWindow::AudioStopClicked);
@@ -314,8 +313,6 @@ void MainWindow::DrawBtPage(void)
 
 void MainWindow::DrawEventListenPage(void)
 {
-    networkManager = new QNetworkConfigurationManager(this);
-
     QGroupBox *ListenEventBox = new QGroupBox("Event",this);
     ListenEventBox->setGeometry(10,320,120,240);
     QVBoxLayout *Eventlayout = new QVBoxLayout(this);
@@ -361,10 +358,10 @@ void MainWindow::DrawEventListenPage(void)
 void MainWindow::DrawlanStatusUpdate(bool isOnline)
 {
     if (isOnline) {
-        qDebug() << "Network connected!";
+        //qDebug() << "Network connected!";
         lanstatus->setStyleSheet("background-color: green; border-radius: 10px;");
     } else {
-        qDebug() << "Network disconnected!";
+        //qDebug() << "Network disconnected!";
         lanstatus->setStyleSheet("background-color: gray; border-radius: 10px;");
     }
 }

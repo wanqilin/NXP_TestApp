@@ -23,8 +23,8 @@ void HotPlugWorkThread::run()
     while(!isInterruptionRequested())
     {
         usbCnt = getUSBDeviceCount();
-        //if(usbCnt!=0)
-        emit RefreshUsbOSD(usbCnt);
+            emit RefreshUsbOSD(usbCnt);
+        getEthernetStatus();
         QThread::sleep(1);
     }
 }
@@ -70,7 +70,7 @@ bool HotPlugWorkThread::isUsbStorage(const std::string& devicePath) {
     return false;
 }
 
-int MainWindow::getUSBDeviceCount() {
+int HotPlugWorkThread::getUSBDeviceCount() {
     int usbCount = 0;
 
     DIR* dir = opendir("/sys/class/block");
@@ -95,5 +95,97 @@ int MainWindow::getUSBDeviceCount() {
 
     closedir(dir);
     return usbCount;
+}
+#endif
+
+#ifdef OS_WINDOWS
+void HotPlugWorkThread::getEthernetStatus(void)
+{
+    IP_ADAPTER_ADDRESSES *pAdapterAddresses = nullptr;
+    ULONG outBufLen = 15000;
+    ULONG flags = GAA_FLAG_INCLUDE_GATEWAYS;
+    DWORD dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, nullptr, pAdapterAddresses, &outBufLen);
+
+    if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
+        pAdapterAddresses = (IP_ADAPTER_ADDRESSES *)malloc(outBufLen);
+        dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, nullptr, pAdapterAddresses, &outBufLen);
+    }
+
+    if (dwRetVal == ERROR_SUCCESS) {
+        IP_ADAPTER_ADDRESSES *pAdapter = pAdapterAddresses;
+        while (pAdapter) {
+            //qDebug() << "Adapter name: " << pAdapter->AdapterName;
+            //qDebug() << "Description: " << pAdapter->Description;
+
+            if (pAdapter->IfType == IF_TYPE_ETHERNET_CSMACD)
+            {
+                qDebug() << "Type: Ethernet (ETHERNET)";
+                // check connect
+                //qDebug() << "OperStatus: " << pAdapter->OperStatus;
+                if (pAdapter->OperStatus == IfOperStatusUp)
+                {
+                    qDebug() << "Status: Connected";
+                    emit RefreshEthOSD(true);
+                } else
+                {
+                    qDebug() << "Status: Disconnected";
+                    emit RefreshEthOSD(false);
+                }
+            }
+            else if (pAdapter->IfType == IF_TYPE_IEEE80211)
+            {
+                qDebug() << "Type: Wireless (Wi-Fi)";
+
+            }
+            else
+            {
+                qDebug() << "Type: Other";
+            }
+
+            pAdapter = pAdapter->Next;
+        }
+    } else {
+        qDebug() << "Error getting adapter information, error code:" << dwRetVal;
+    }
+
+    if (pAdapterAddresses) {
+        free(pAdapterAddresses);
+    }
+}
+#endif
+
+#ifdef OS_UNIX
+void HotPlugWorkThread::getEthernetStatus(void)
+{
+    // call ifconfig get network inface info 
+    QProcess process;
+    process.start("ifconfig");
+    process.waitForFinished();
+    QString output = process.readAllStandardOutput();
+
+    // check net port
+    if (output.contains("wlan"))
+    {
+        qDebug() << "Network type: Wireless (Wi-Fi)";
+    }
+    else if (output.contains("eth"))
+    {
+        qDebug() << "Network type: Wired (Ethernet)";
+    }
+    else
+    {
+        qDebug() << "Network type: Unknown";
+    }
+
+    if (output.contains("inet ")) {
+        qDebug() << "Network is up";
+    } else {
+        qDebug() << "Network is down";
+    }
+
+    process.start("ip link show");
+    process.waitForFinished();
+    output = process.readAllStandardOutput();
+    qDebug() << output;
 }
 #endif

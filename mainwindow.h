@@ -16,7 +16,6 @@
 #include <QCameraInfo>
 #include <QGroupBox>
 #include <QBoxLayout>
-#include <QNetworkConfigurationManager>
 #include <opencv2/core/core.hpp>
 #include <QFileDialog>
 #include <QMediaPlayer>
@@ -102,7 +101,7 @@ private:
     HotPlugWorkThread *pHotPlugWorkThread;
     QThread *pOsdEventThread;
     OsdEventWork *pOsdEventWork;
-    QNetworkConfigurationManager *networkManager;
+    //QNetworkConfigurationManager *networkManager;
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);
