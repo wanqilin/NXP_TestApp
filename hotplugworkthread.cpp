@@ -119,27 +119,27 @@ void HotPlugWorkThread::getEthernetStatus(void)
 
             if (pAdapter->IfType == IF_TYPE_ETHERNET_CSMACD)
             {
-                qDebug() << "Type: Ethernet (ETHERNET)";
+                //qDebug() << "Type: Ethernet (ETHERNET)";
                 // check connect
                 //qDebug() << "OperStatus: " << pAdapter->OperStatus;
                 if (pAdapter->OperStatus == IfOperStatusUp)
                 {
-                    qDebug() << "Status: Connected";
+                    //qDebug() << "Status: Connected";
                     emit RefreshEthOSD(true);
-                } else
+                }
+                else
                 {
-                    qDebug() << "Status: Disconnected";
+                    //qDebug() << "Status: Disconnected";
                     emit RefreshEthOSD(false);
                 }
             }
             else if (pAdapter->IfType == IF_TYPE_IEEE80211)
             {
-                qDebug() << "Type: Wireless (Wi-Fi)";
-
+                ;//qDebug() << "Type: Wireless (Wi-Fi)";
             }
             else
             {
-                qDebug() << "Type: Other";
+                ;//qDebug() << "Type: Other";
             }
 
             pAdapter = pAdapter->Next;
@@ -152,14 +152,15 @@ void HotPlugWorkThread::getEthernetStatus(void)
         free(pAdapterAddresses);
     }
 }
-#endif
-
-#ifdef OS_UNIX
+#else // OS_UNIX
 void HotPlugWorkThread::getEthernetStatus(void)
 {
     // call ifconfig get network inface info 
+  
     QProcess process;
-    process.start("ifconfig");
+    QString program = "ip";
+    QStringList arguments = {"link", "show","eth0"};
+    process.start(program, arguments);
     process.waitForFinished();
     QString output = process.readAllStandardOutput();
 
@@ -170,22 +171,26 @@ void HotPlugWorkThread::getEthernetStatus(void)
     }
     else if (output.contains("eth"))
     {
-        qDebug() << "Network type: Wired (Ethernet)";
+        //qDebug() << "Network type: Wired (Ethernet)";
+        if (output.contains("UP "))
+        {
+            //qDebug() << "Network is up";
+            emit RefreshEthOSD(true);
+        }
+        else if(output.contains("DOWN "))
+        {
+            //qDebug() << "Network is down";
+            emit RefreshEthOSD(false);
+        }
+        else
+        {
+            qDebug() << "Network State:Unknown ";
+        }
     }
     else
     {
         qDebug() << "Network type: Unknown";
-    }
+    }  
 
-    if (output.contains("inet ")) {
-        qDebug() << "Network is up";
-    } else {
-        qDebug() << "Network is down";
-    }
-
-    process.start("ip link show");
-    process.waitForFinished();
-    output = process.readAllStandardOutput();
-    qDebug() << output;
 }
 #endif

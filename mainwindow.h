@@ -101,7 +101,6 @@ private:
     HotPlugWorkThread *pHotPlugWorkThread;
     QThread *pOsdEventThread;
     OsdEventWork *pOsdEventWork;
-    //QNetworkConfigurationManager *networkManager;
 
     void DrawOSDInterface(void);
     void SetSignalAndSLot(void);

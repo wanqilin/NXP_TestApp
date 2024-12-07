@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QThread>
+#include <QProcess>
 #ifdef OS_UNIX
 #include <dirent.h>
 #endif

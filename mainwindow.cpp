@@ -331,7 +331,7 @@ void MainWindow::DrawEventListenPage(void)
 
     //USB
     usbbox = new QGroupBox(this);
-    usbtxt = new QLabel("USB-1",this);
+    usbtxt = new QLabel("USB",this);
     usbstatus = new QLabel("0",this);
     usbstatus->setFixedSize(20, 20);
     usbstatus->setAlignment(Qt::AlignCenter);
@@ -382,7 +382,7 @@ void MainWindow::AudioRecordClicked(void)
     QString outputFile = "audio_output.mp3";
     AudioRecordfileName = QFileDialog::getSaveFileName(this, "Save Audio File", outputFile, "*.mp3");
 #else
-    AudioRecordfileName = "/usr/bin/audio_output.mp3"
+    AudioRecordfileName = "/usr/bin/audio_output.mp3";
 #endif
     emit AudioRecordClickedSignal(&AudioRecordfileName);
 }
@@ -399,7 +399,7 @@ void MainWindow::AudioPlayClicked(void)
 #ifdef OS_WINDOWS
     AudioPlayfileName = QFileDialog::getOpenFileName(this, "Open Audio File", "", "*.mp3 *.wav");
 #else
-    AudioPlayfileName = "/usr/bin/audio_output.mp3"
+    AudioPlayfileName = "/usr/bin/audio_output.mp3";
 #endif
     emit AudioPlayClickedSignal(&AudioPlayfileName);
 }

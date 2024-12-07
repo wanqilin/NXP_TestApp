@@ -9,6 +9,15 @@ OsdEventWork::OsdEventWork(QWidget *parent)
     audioplayer = new QMediaPlayer(static_cast<QWidget*>(parent));
     audiorecorder = new QMediaRecorder(audioplayer,static_cast<QWidget*>(parent));
     m_pAudioRecorder = new QAudioRecorder (static_cast<QWidget*>(parent));
+    for ( QString &device : m_pAudioRecorder->audioInputs())
+    {
+        qDebug() << "device:" << device;
+    }
+
+    for ( QString &codecName : m_pAudioRecorder->supportedAudioCodecs () )
+    {
+        qDebug() << "codecName:" << codecName;
+    }
 
     connect(audioplayer, &QMediaPlayer::stateChanged, this, &OsdEventWork::onStateChanged);
     connect(audioplayer, &QMediaPlayer::mediaStatusChanged, this, &OsdEventWork::onMediaStateChanged);

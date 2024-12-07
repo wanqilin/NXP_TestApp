@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QThread>
+#include <QRegularExpression>
 
 class WirelessDeviceWorkThread : public QThread
 {
