@@ -11,8 +11,9 @@
 #include <QAudioEncoderSettings>
 #include <QFileDialog>
 
+#ifdef OS_UNIX
 #include <gst/gst.h>
-
+#endif
 
 class OsdEventWork : public QObject
 {
@@ -28,7 +29,7 @@ private:
     QMediaPlayer *audioplayer;
     QMediaRecorder *audiorecorder;
     QAudioRecorder  *m_pAudioRecorder;
-#endifd
+#endif
 #ifdef OS_UNIX
     GstElement *Recordpipeline;
     GstElement *playingPipeline;

@@ -64,6 +64,7 @@ void OsdEventWork::onDurationChanged(qint64 duration)
     emit RefreshdurationChanged(duration);
 }
 
+#if OS_UNIX
 static gboolean bus_call(GstBus *bus, GstMessage *msg, gpointer data) {
     switch (GST_MESSAGE_TYPE(msg)) {
         case GST_MESSAGE_DURATION_CHANGED: {
@@ -80,6 +81,7 @@ static gboolean bus_call(GstBus *bus, GstMessage *msg, gpointer data) {
     }
     return TRUE;
 }
+#endif
 
 void OsdEventWork:: recordAudio(QString *sAudiofileName)
 {
