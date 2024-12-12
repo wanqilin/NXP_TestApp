@@ -379,10 +379,10 @@ void MainWindow::UsbDeviceUpdate(int usbCnt)
 void MainWindow::AudioRecordClicked(void)
 {
 #ifdef OS_WINDOWS
-    QString outputFile = "audio_output.mp3";
-    AudioRecordfileName = QFileDialog::getSaveFileName(this, "Save Audio File", outputFile, "*.mp3");
+    QString outputFile = "audio_output.wav";
+    AudioRecordfileName = QFileDialog::getSaveFileName(this, "Save Audio File", outputFile, "*.wav");
 #else
-    AudioRecordfileName = "/usr/bin/audio_output.mp3";
+    AudioRecordfileName = "/usr/bin/audio_output.wav";
 #endif
     emit AudioRecordClickedSignal(&AudioRecordfileName);
 }
@@ -399,7 +399,7 @@ void MainWindow::AudioPlayClicked(void)
 #ifdef OS_WINDOWS
     AudioPlayfileName = QFileDialog::getOpenFileName(this, "Open Audio File", "", "*.mp3 *.wav");
 #else
-    AudioPlayfileName = "/usr/bin/audio_output.mp3";
+    AudioPlayfileName = "/usr/bin/audio_output.wav";
 #endif
     emit AudioPlayClickedSignal(&AudioPlayfileName);
 }

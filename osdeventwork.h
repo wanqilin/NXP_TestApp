@@ -5,8 +5,14 @@
 #include <QMediaPlayer>
 #include <QMediaRecorder>
 #include <QAudioRecorder>
+#if 0 //#ifdef OS_UNIX
+#include <QMediaEncoderSettings>
+#endif
 #include <QAudioEncoderSettings>
 #include <QFileDialog>
+
+#include <gst/gst.h>
+
 
 class OsdEventWork : public QObject
 {
@@ -17,10 +23,16 @@ public:
     ~OsdEventWork();
 
 private:
+    QString m_sAudiofileName;
+#ifdef OS_WINDOWS
     QMediaPlayer *audioplayer;
     QMediaRecorder *audiorecorder;
     QAudioRecorder  *m_pAudioRecorder;
-    QString m_sAudiofileName;
+#endifd
+#ifdef OS_UNIX
+    GstElement *Recordpipeline;
+    GstElement *playingPipeline;
+#endif
 
 public slots:
     void recordAudio(QString *sAudiofileName);
