@@ -3,14 +3,32 @@
 #include <QThread>
 #include <QProcess>
 
-WirelessDeviceWorkThread::WirelessDeviceWorkThread() {}
+WirelessDeviceWorkThread::WirelessDeviceWorkThread()
+{
+    stopRequested = false;
+    discoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
+    connect(discoveryAgent, &QBluetoothDeviceDiscoveryAgent::deviceDiscovered,
+            this, &WirelessDeviceWorkThread::addBtDevice);
+    connect(discoveryAgent, &QBluetoothDeviceDiscoveryAgent::finished,
+            this, &WirelessDeviceWorkThread::BtscanFinished);
+    discoveryAgent->start();
+}
 
-WirelessDeviceWorkThread::~WirelessDeviceWorkThread() {}
+WirelessDeviceWorkThread::~WirelessDeviceWorkThread() 
+{
+    stopRequested = false;
+}
+
+void WirelessDeviceWorkThread::stop()
+{
+    qDebug()<<"WirelessDeviceWorkThread to stop!";
+    stopRequested = true;
+}
 
 void WirelessDeviceWorkThread::run()
 {
     qDebug()<<"WirelessDeviceWorkThread is run!";
-    while(!isInterruptionRequested())
+    while(!stopRequested)
     {
         wifiList = getWifiList();
         emit RefreshWifiOSD(wifiList);

@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QThread>
 #include <QRegularExpression>
+#include <QBluetoothDeviceDiscoveryAgent>
+#include <QBluetoothDeviceInfo>
 
 class WirelessDeviceWorkThread : public QThread
 {
@@ -14,11 +16,20 @@ public:
     ~WirelessDeviceWorkThread();
     void run() override;
 
+    void stop();
 signals:
     void RefreshWifiOSD(const QStringList& wifiList);
+    void RefreshBtOSD(const QStringList& btList);
 
+private slots:
+    void addBtDevice(const QBluetoothDeviceInfo &device);
+    void BtscanFinished();
 private:
+    bool stopRequested;
     QStringList wifiList;
+    QStringList btList;
+    QBluetoothDeviceDiscoveryAgent *discoveryAgent;
+
     QStringList getWifiList();
 };
 #endif // WIRELESSDEVICEWORKTHREAD_H

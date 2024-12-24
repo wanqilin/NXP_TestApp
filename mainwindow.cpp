@@ -1,3 +1,4 @@
+#include <QApplication>
 #include "mainwindow.h"
 #include "OpenCVWindow.h"
 #include <QTimer>
@@ -6,6 +7,7 @@
 #include <QPalette>
 #include <QVBoxLayout>
 #include <QGroupBox>
+#include <QSettings>
 
 using namespace std;
 
@@ -16,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     this->setWindowTitle(tr("NxpTestApp"));
     this->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
+
     InitVariable();
 
     DrawOSDInterface();
@@ -35,30 +38,97 @@ MainWindow::MainWindow(QWidget *parent)
     pOpenCVCameraThread->start();
 
     SetSignalAndSLot();
+    AppLicCheck();
 }
 
 MainWindow::~MainWindow()
 {
+#if (APP_LIC_TYPE==0)
+    AppLicCnt = loadData();
+    if(AppLicCnt > APP_DEMO_LIC_CNT)
+    {
+        qDebug()<<"AppLic Cnt over Limit!";
+        AppLicCnt = APP_DEMO_LIC_CNT + 2;
+        saveData(AppLicCnt);
+    }
+#endif
+    m_timer->stop();
+    AppExittimer->stop();
+    delete m_timer;
+    delete AppExittimer;
+
+    pWirelessDeviceWorkThread->stop();
     pWirelessDeviceWorkThread->quit();
     pWirelessDeviceWorkThread->wait();
     pWirelessDeviceWorkThread->deleteLater();
 
+    pHotPlugWorkThread->stop();
     pHotPlugWorkThread->quit();
     pHotPlugWorkThread->wait();
     pHotPlugWorkThread->deleteLater();
 
+    pOpenCVCameraThread->stop();
     pOpenCVCameraThread->quit();
     pOpenCVCameraThread->wait();
     pOpenCVCameraThread->deleteLater();
 
+    pOsdEventWork->deleteLater();
     pOsdEventThread->quit();
     pOsdEventThread->wait();
     pOsdEventThread->deleteLater();
+    qDebug() << "~MainWindow()";
 }
 
+#if(APP_LIC_TYPE==0)
+void MainWindow::saveData(int value) {
+    QSettings settings("BoardTestApp", "BoardTestAppConfig");
+    settings.setValue("AppLicCnt", value);
+    qDebug() << "Data saved:" << value;
+}
+
+int MainWindow::loadData() {
+    QSettings settings("BoardTestApp", "BoardTestAppConfig");
+    int value = settings.value("AppLicCnt", 0).toInt();
+    qDebug() << "Data loaded:" << value;
+    return value;
+}
+
+void MainWindow::AppExit()
+{
+    qDebug() << "AppExit!";
+    QApplication::quit();
+    qDebug() << "AppQuit-2!";
+}
+
+void MainWindow::AppLicLimitshowInfo() {
+    qDebug() << "AppLic Limit ShowInfo!";
+    QMessageBox::warning(this, "DemoApp", "Trial times has exceeded the upper limit,Exit the App after 10 seconds", QMessageBox::Ok);
+    //SetTimer
+    AppExittimer = new QTimer(this);
+    AppExittimer->setSingleShot(true);  //Non-single trigger
+    AppExittimer->setInterval( 10*1000 );
+    connect(AppExittimer, SIGNAL(timeout()), this, SLOT(AppExit()));
+    AppExittimer->start();
+}
+#endif
+
+void MainWindow::AppLicCheck(void)
+{
+#if(APP_LIC_TYPE==0)
+    if(AppLicCnt > APP_DEMO_LIC_CNT)
+        emit DemoAppLicLimit();
+#endif
+}
 void MainWindow::InitVariable(void)
 {
-    blanstatus = false;
+#if(APP_LIC_TYPE==0)
+    AppLicCnt = loadData();
+    if(AppLicCnt <= APP_DEMO_LIC_CNT)
+    {
+        AppLicCnt = AppLicCnt + 1;
+        saveData(AppLicCnt);
+    }
+#endif
 }
 
 void MainWindow::DrawOSDInterface(void)
@@ -66,9 +136,14 @@ void MainWindow::DrawOSDInterface(void)
     appbox = new QGroupBox(this);
     appbox->setGeometry(0,0,APP_WIDTH,APP_HEIGH);
     applayout = new QBoxLayout(QBoxLayout::TopToBottom,this);
-
+#if(APP_LIC_TYPE==1)
     this->displayTitle = new QLabel("TestApp",this);
     this->displayTitle->setGeometry(530,50,200,50);
+#else
+    this->displayTitle = new QLabel("TestApp.demo",this);
+    this->displayTitle->setGeometry(530,50,200,50);
+#endif
+
     this->displayTitle->setFont(QFont("Arial",16,QFont::Bold));
     //applayout->addWidget(displayTitle);
     //appbox->setLayout(applayout);
@@ -94,10 +169,16 @@ void MainWindow::DrawOSDInterface(void)
 
 void MainWindow::SetSignalAndSLot(void)
 {
+    //AppLicType
+#if(APP_LIC_TYPE==0)
+    connect(this,&MainWindow::DemoAppLicLimit,this,&MainWindow::AppLicLimitshowInfo);
+#endif
     //opencv slot
     connect(pOpenCVCameraThread,&OpenCVCameraThread::frameProcessed,this,&MainWindow::displayImage);
     //wifi slot
     connect(pWirelessDeviceWorkThread, &WirelessDeviceWorkThread::RefreshWifiOSD, this, &MainWindow::wifiListUpdate);
+    //Bt slot
+    connect(pWirelessDeviceWorkThread, &WirelessDeviceWorkThread::RefreshBtOSD, this, &MainWindow::btListUpdate);
     //Hot Plug Slot
     connect(pHotPlugWorkThread, &HotPlugWorkThread::RefreshUsbOSD, this, &MainWindow::UsbDeviceUpdate);
     connect(pHotPlugWorkThread, &HotPlugWorkThread::RefreshEthOSD, this, &MainWindow::DrawlanStatusUpdate);
@@ -293,6 +374,18 @@ void MainWindow::wifiListUpdate(const QStringList &wifiList)
     }
 }
 
+void MainWindow::btListUpdate(const QStringList &btList)
+{
+    qDebug()<<"Bt list update!";
+    this->BtlistWidget->clear();
+
+    // get bt list
+    for (const QString &bt : btList) {
+        //qDebug()<<bt;
+        this->BtlistWidget->addItem(bt);
+    }
+}
+
 void MainWindow::DrawBtPage(void)
 {
     QGroupBox *BtGroupBox = new QGroupBox("BT List",this);
@@ -350,9 +443,6 @@ void MainWindow::DrawEventListenPage(void)
     //applayout->addWidget(ListenEventBox);
     //appbox->setLayout(applayout);
 
-    //blanstatus = networkManager->isOnline();
-    //DrawlanStatusUpdate(blanstatus);
-
 }
 
 void MainWindow::DrawlanStatusUpdate(bool isOnline)
@@ -399,7 +489,7 @@ void MainWindow::AudioPlayClicked(void)
 #ifdef OS_WINDOWS
     AudioPlayfileName = QFileDialog::getOpenFileName(this, "Open Audio File", "", "*.mp3 *.wav");
 #else
-    AudioPlayfileName = "/usr/bin/audio_output.wav";
+    AudioPlayfileName = "/usr/bin/audio_output.wav"; //44.1k_2ch_16b_1k_90.wav
 #endif
     emit AudioPlayClickedSignal(&AudioPlayfileName);
 }
@@ -411,19 +501,19 @@ void MainWindow::AudioRecordDurationUpdate(qint64 duration)
     AudioRecordButton->setText(QString("Recorded %1 seconds").arg(duration / 1000) ) ;
 }
 
-void MainWindow::AudioPlayStatusUpdate(QMediaPlayer::State newState)
+void MainWindow::AudioPlayStatusUpdate(qint8 newState)
 {
-    //record time
+    //
     qDebug() << "AudioPlayStatus:"<< newState;
-    if(newState == QMediaPlayer::PlayingState)
-        AudioPlayButton->setText(QString("Playing")) ;
+    if(newState == 1) // 1:QMediaPlayer::PlayingState
+        AudioPlayButton->setText(QString("Playing"));
 }
 
-void MainWindow::AudioPlayMediaStatusUpdate(QMediaPlayer::MediaStatus newState)
+void MainWindow::AudioPlayMediaStatusUpdate(qint8 newState)
 {
     //record time
     qDebug() << "AudioPlayMediaStatus:"<< newState;
-    if(newState == QMediaPlayer::EndOfMedia)
+    if(newState == 7)  // 7: QMediaPlayer::EndOfMedia
         AudioPlayButton->setText(QString("PlayDone")) ;
 }
 

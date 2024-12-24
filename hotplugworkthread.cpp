@@ -14,13 +14,26 @@ DEFINE_GUID(GUID_DEVINTERFACE_DISK,
 #endif
 
 
-HotPlugWorkThread::HotPlugWorkThread() {}
-HotPlugWorkThread::~HotPlugWorkThread() {}
+HotPlugWorkThread::HotPlugWorkThread()
+{
+    stopRequested = false;
+}
+
+HotPlugWorkThread::~HotPlugWorkThread() 
+{
+    stopRequested = false;
+}
+
+void HotPlugWorkThread::stop()
+{
+    qDebug()<<"HotPlugWorkThread to stop!";
+    stopRequested = true;
+}
 
 void HotPlugWorkThread::run()
 {
     qDebug()<<"HotPlugWorkThread is run!";
-    while(!isInterruptionRequested())
+    while(!stopRequested)
     {
         usbCnt = getUSBDeviceCount();
             emit RefreshUsbOSD(usbCnt);
@@ -33,7 +46,7 @@ void HotPlugWorkThread::run()
 int HotPlugWorkThread::getUSBDeviceCount() {
     // Get usb device info
     HDEVINFO deviceInfoSet = SetupDiGetClassDevs(
-        &GUID_DEVINTERFACE_DISK, // &GUID_DEVINTERFACE_USB_DEVICE,
+        &GUID_DEVINTERFACE_USB_DEVICE,
         nullptr,
         nullptr,
         DIGCF_PRESENT | DIGCF_DEVICEINTERFACE
@@ -44,12 +57,20 @@ int HotPlugWorkThread::getUSBDeviceCount() {
         return -1;
     }
 
+    DWORD dataType;
+    TCHAR buffer[1024];
+    DWORD bufferSize = sizeof(buffer);
+
     // loop device info
     int deviceCount = 0;
     SP_DEVINFO_DATA deviceInfoData;
     deviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
 
     for (int i = 0; SetupDiEnumDeviceInfo(deviceInfoSet, i, &deviceInfoData); i++) {
+        if (SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_DEVICEDESC, &dataType, (PBYTE)buffer, bufferSize, nullptr))
+        {
+            ;//qDebug() << "Device Description: "<< QString::fromWCharArray(buffer);
+        }
         deviceCount++;
     }
 
@@ -60,12 +81,18 @@ int HotPlugWorkThread::getUSBDeviceCount() {
 #endif
 #ifdef OS_UNIX
 bool HotPlugWorkThread::isUsbStorage(const std::string& devicePath) {
-    std::string usbPath = "/sys/class/block/" + devicePath + "/device";
-    DIR* dir = opendir(usbPath.c_str());
-    if (dir) {
-        // If the device directory exists, it is a USB device
-        closedir(dir);
-        return true;
+std::string ueventPath = "/sys/class/block/" + devicePath + "/device/uevent";
+    FILE* file = fopen(ueventPath.c_str(), "r");
+    if (file) {
+        char line[256];
+        while (fgets(line, sizeof(line), file)) {
+            //qDebug() << line;
+            if ((strstr(line, "DEVTYPE=scsi_device")!= nullptr)||(strstr(line, "MMC_TYPE=SD")!= nullptr)) {
+                fclose(file);
+                return true;
+            }
+        }
+        fclose(file);
     }
     return false;
 }
